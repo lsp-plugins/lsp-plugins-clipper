@@ -33,17 +33,95 @@ namespace lsp
     {
         typedef struct clipper
         {
-            static constexpr float  SAMPLES_MIN         = 0.0f;
-            static constexpr float  SAMPLES_MAX         = 10000.0f;
-            static constexpr float  SAMPLES_DFL         = 0.0f;
-            static constexpr float  SAMPLES_STEP        = 1.0f;
+            static constexpr size_t BANDS_MAX               = 4;
+            static constexpr float  ODP_CURVE_DB_MIN        = -18.0f;
+            static constexpr float  ODP_CURVE_DB_MAX        = 6.0f;
+            static constexpr float  CLIP_CURVE_DB_MIN       = -36.0f;
+            static constexpr float  CLIP_CURVE_DB_MAX       = 12.0f;
+            static constexpr float  CLIP_CURVE_X_MIN        = -0.25f;
+            static constexpr float  CLIP_CURVE_X_MAX        = 2.25f;
+            static constexpr size_t CURVE_MESH_POINTS       = 256;
+            static constexpr size_t REFRESH_RATE            = 20;
+            static constexpr size_t TIME_MESH_POINTS        = 320;
+            static constexpr float  TIME_HISTORY_MAX        = 5.0f;
+            static constexpr float  TIME_HISTORY_GAP        = 0.5f;
+            static constexpr float  LUFS_MEASUREMENT_PERIOD = 400.0f;
+            static constexpr float  LUFS_LIMITER_REACT      = 48.0f;
 
-            static constexpr float  TIME_MIN            = 0.0f;
-            static constexpr float  TIME_MAX            = 1000.0f;
-            static constexpr float  TIME_DFL            = 0.0f;
-            static constexpr float  TIME_STEP           = 0.01f;
+            static constexpr float  THRESHOLD_MIN           = -48.0f;
+            static constexpr float  THRESHOLD_MAX           = 0.0f;
+            static constexpr float  THRESHOLD_DFL           = 0.0f;
+            static constexpr float  THRESHOLD_STEP          = 0.05f;
 
-            static constexpr float  DELAY_OUT_MAX_TIME  = 10000.0f;
+            static constexpr float  HPF_FREQ_MIN            = 10.0f;
+            static constexpr float  HPF_FREQ_MAX            = 60.0f;
+            static constexpr float  HPF_FREQ_DFL            = 30.0f;
+            static constexpr float  HPF_FREQ_STEP           = 0.0025f;
+
+            static constexpr float  STEREO_LINK_MIN         = 0.0f;
+            static constexpr float  STEREO_LINK_MAX         = 100.0f;
+            static constexpr float  STEREO_LINK_DFL         = 50.0f;
+            static constexpr float  STEREO_LINK_STEP        = 0.05f;
+
+            static constexpr float  MAKEUP_MIN              = -24.0f;
+            static constexpr float  MAKEUP_MAX              = 24.0f;
+            static constexpr float  MAKEUP_DFL              = 0.0f;
+            static constexpr float  MAKEUP_STEP             = 0.05f;
+
+            static constexpr float  PREAMP_MIN              = -24.0f;
+            static constexpr float  PREAMP_MAX              = 24.0f;
+            static constexpr float  PREAMP_DFL              = 0.0f;
+            static constexpr float  PREAMP_STEP             = 0.05f;
+
+            static constexpr float  LUFS_THRESH_MIN         = -36.0f;
+            static constexpr float  LUFS_THRESH_MAX         = 0.0f;
+            static constexpr float  LUFS_THRESH_DFL         = -3.0f;
+            static constexpr float  LUFS_THRESH_STEP        = 0.05f;
+
+            static constexpr float  ODP_LINK_MIN            = GAIN_AMP_M_INF_DB;
+            static constexpr float  ODP_LINK_MAX            = GAIN_AMP_0_DB;
+            static constexpr float  ODP_LINK_DFL            = GAIN_AMP_M_6_DB;
+            static constexpr float  ODP_LINK_STEP           = 0.05f;
+
+            static constexpr float  ODP_KNEE_MIN            = 0.0f;
+            static constexpr float  ODP_KNEE_MAX            = 6.0f;
+            static constexpr float  ODP_KNEE_DFL            = 1.5f;
+            static constexpr float  ODP_KNEE_STEP           = 0.005f;
+
+            static constexpr float  ODP_THRESHOLD_MIN       = -12.0f;
+            static constexpr float  ODP_THRESHOLD_MAX       = 0.0f;
+            static constexpr float  ODP_THRESHOLD_DFL       = -1.5f;
+            static constexpr float  ODP_THRESHOLD_STEP      = 0.01f;
+
+            static constexpr float  ODP_RESONANCE_MIN       = SPEC_FREQ_MIN;
+            static constexpr float  ODP_RESONANCE_MAX       = SPEC_FREQ_MAX;
+            static constexpr float  ODP_RESONANCE_DFL       = 50.0f;
+            static constexpr float  ODP_RESONANCE_STEP      = 0.00025f;
+
+            static constexpr float  CLIP_THRESHOLD_MIN      = GAIN_AMP_M_INF_DB;
+            static constexpr float  CLIP_THRESHOLD_MAX      = GAIN_AMP_0_DB;
+            static constexpr float  CLIP_THRESHOLD_DFL      = GAIN_AMP_M_3_DB;
+            static constexpr float  CLIP_THRESHOLD_STEP     = 0.025f;
+
+            static constexpr float  CLIP_PUMPING_MIN        = -12.0f;
+            static constexpr float  CLIP_PUMPING_MAX        = 12.0f;
+            static constexpr float  CLIP_PUMPING_DFL        = 0.0f;
+            static constexpr float  CLIP_PUMPING_STEP       = 0.025f;
+
+            enum dithering_t
+            {
+                DITHER_NONE,
+                DITHER_7BIT,
+                DITHER_8BIT,
+                DITHER_11BIT,
+                DITHER_12BIT,
+                DITHER_15BIT,
+                DITHER_16BIT,
+                DITHER_23BIT,
+                DITHER_24BIT,
+
+                DITHER_DEFAULT  = DITHER_NONE
+            };
         } clipper;
 
         // Plugin type metadata

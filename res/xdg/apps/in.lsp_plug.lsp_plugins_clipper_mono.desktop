@@ -1,9 +1,9 @@
 [Desktop Entry]
 Version=1.0
 Type=Application
-Name=TODO: Template Plugin
-GenericName=TODO: Template Plugin
-Comment=TODO: add description what plugin does
+Name=Clipper Mono
+GenericName=Clipper
+Comment=Peak clipping tool for maximization of output loudness (mono version)
 Exec=lsp-plugins-clipper-mono
 Icon=lsp-plugins
 Terminal=false

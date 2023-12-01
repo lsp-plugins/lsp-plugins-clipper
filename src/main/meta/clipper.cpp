@@ -38,85 +38,137 @@ namespace lsp
 {
     namespace meta
     {
+        static const port_item_t sigmoid_functions[] =
+        {
+            { "Hard clip",          "sigmoid.hardclip"                      },
+            { "Parabolic",          "sigmoid.parabolic"                     },
+            { "Sine",               "sigmoid.sine"                          },
+            { "Logistic",           "sigmoid.logistic"                      },
+            { "Arctangent",         "sigmoid.arctangent"                    },
+            { "Hyperbolic tangent", "sigmoid.hyperbolic_tangent"            },
+            { "Guidermannian",      "sigmoid.guidermannian"                 },
+            { "Error function",     "sigmoid.error_function"                },
+            { "Smoothstep",         "sigmoid.smoothstep"                    },
+            { "Smootherstep",       "sigmoid.smootherstep"                  },
+            { "Circle",             "sigmoid.circle"                        },
+
+            { NULL, NULL }
+        };
+
+        static port_item_t clipper_dither_modes[] =
+        {
+            { "None",               "dither.none"                           },
+            { "7bit",               "dither.bits.7"                         },
+            { "8bit",               "dither.bits.8"                         },
+            { "11bit",              "dither.bits.11"                        },
+            { "12bit",              "dither.bits.12"                        },
+            { "15bit",              "dither.bits.15"                        },
+            { "16bit",              "dither.bits.16"                        },
+            { "23bit",              "dither.bits.23"                        },
+            { "24bit",              "dither.bits.24"                        },
+            { NULL, NULL }
+        };
+
+        #define CLIPPER_COMMON \
+            BYPASS, \
+            IN_GAIN, \
+            OUT_GAIN, \
+            SWITCH("lufs_on", "Enable input LUFS limitation", 1.0f), \
+            CONTROL("lufs_th", "Input LUFS limiter threshold", U_LUFS, clipper::LUFS_THRESH), \
+            LUFS_METER("lufs_il", "Input LUFS value", 24.0f), \
+            METER_OUT_GAIN("lufs_gr", "Input LUFS gain reduction", GAIN_AMP_0_DB), \
+            LUFS_METER("lufs_ol", "Output LUFS value", 24.0f), \
+            CONTROL("thresh", "Clipping threshold", U_DB, clipper::THRESHOLD), \
+            SWITCH("boost", "Boosting mode", 1.0f), \
+            COMBO("dither", "Dithering mode", 0, clipper_dither_modes), \
+            SWITCH("clog", "Clipper logarithmic display", 1.0f), \
+            SWITCH("op", "Overdrive protection", 1.0f), \
+            CONTROL("th", "Overdrive protection threshold", U_DB, clipper::ODP_THRESHOLD), \
+            CONTROL("kn", "Overdrive protection knee", U_DB, clipper::ODP_KNEE), \
+            LOG_CONTROL("rs", "Overdrive protection resonance", U_HZ, clipper::ODP_RESONANCE), \
+            MESH("opc", "Overdrive protection chart", 2, clipper::CURVE_MESH_POINTS), \
+            COMBO("cf", "Clipper sigmoid function", 2.0f, sigmoid_functions), \
+            LOG_CONTROL("ct", "Clipper sigmoid threshold", U_GAIN_AMP, clipper::CLIP_THRESHOLD), \
+            CONTROL("cp", "Clipper sigmoid pumping", U_DB, clipper::CLIP_PUMPING), \
+            MESH("cfc", "Clipper sigmoid function chart", 4, clipper::CURVE_MESH_POINTS)
+
+        #define CLIPPER_COMMON_STEREO \
+            CLIPPER_COMMON, \
+            CONTROL_DFL("slink", "Stereo link", U_PERCENT, clipper::STEREO_LINK, 50.0f)
+
+        #define CLIPPER_METERS(id, label) \
+            METER_OUT_GAIN("ilm" id, "Input level meter" label, GAIN_AMP_P_36_DB), \
+            METER_OUT_GAIN("olm" id, "Output level meter" label, GAIN_AMP_P_36_DB), \
+            METER_GAIN_DFL("grm" id, "Gain reduction level meter" label, GAIN_AMP_P_72_DB, GAIN_AMP_0_DB), \
+            METER_OUT_GAIN("odx" id, "Overdrive protection input meter" label, GAIN_AMP_P_36_DB), \
+            METER_OUT_GAIN("ody" id, "Overdrive protection output meter" label, GAIN_AMP_P_36_DB), \
+            METER_GAIN_DFL("odr" id, "Overdrive protection reduction level meter" label, GAIN_AMP_P_72_DB, GAIN_AMP_0_DB), \
+            METER_OUT_GAIN("cfx" id, "Clipping function input meter" label, GAIN_AMP_P_36_DB), \
+            METER_OUT_GAIN("cfy" id, "Clipping function output meter" label, GAIN_AMP_P_36_DB), \
+            METER_GAIN_DFL("cfr" id, "Clipping function reduction level meter" label, GAIN_AMP_P_72_DB, GAIN_AMP_0_DB), \
+            MESH("ctg" id, "Clipper time graph" label, 4, clipper::TIME_MESH_POINTS + 4)
+
+        #define OSCILLOSCOPE_SWITCHES(id, label) \
+            SWITCH("ilg" id, "Input level graph enable" label, 1.0f), \
+            SWITCH("olg" id, "Output level graph enable" label, 1.0f), \
+            SWITCH("grg" id, "Gain reduction graph enable" label, 1.0f)
+
         //-------------------------------------------------------------------------
         // Plugin metadata
 
-        // NOTE: Port identifiers should not be longer than 7 characters as it will overflow VST2 parameter name buffers
         static const port_t clipper_mono_ports[] =
         {
-            // Input and output audio ports
             PORTS_MONO_PLUGIN,
-
-            // Input controls
-            BYPASS,
-            INT_CONTROL("d_in", "Delay in samples", U_SAMPLES, clipper::SAMPLES),
-            DRY_GAIN(0.0f),
-            WET_GAIN(1.0f),
-            OUT_GAIN,
-
-            // Output controls
-            METER_MINMAX("d_out", "Delay time in milliseconds", U_MSEC, 0.0f, clipper::DELAY_OUT_MAX_TIME),
-            METER_GAIN("min", "Input gain", GAIN_AMP_P_48_DB),
-            METER_GAIN("mout", "Output gain", GAIN_AMP_P_48_DB),
+            CLIPPER_COMMON,
+            OSCILLOSCOPE_SWITCHES("", ""),
+            CLIPPER_METERS("", ""),
 
             PORTS_END
         };
 
-        // NOTE: Port identifiers should not be longer than 7 characters as it will overflow VST2 parameter name buffers
         static const port_t clipper_stereo_ports[] =
         {
             // Input and output audio ports
             PORTS_STEREO_PLUGIN,
-
-            // Input controls
-            BYPASS,
-            INT_CONTROL("d_in", "Delay in samples", U_SAMPLES, clipper::SAMPLES),
-            DRY_GAIN(0.0f),
-            WET_GAIN(1.0f),
-            OUT_GAIN,
-
-            // Output controls
-            METER_MINMAX("d_out", "Delay time in milliseconds", U_MSEC, 0.0f, clipper::DELAY_OUT_MAX_TIME),
-            METER_GAIN("min_l", "Input gain left",  GAIN_AMP_P_48_DB),
-            METER_GAIN("mout_l", "Output gain left",  GAIN_AMP_P_48_DB),
-            METER_GAIN("min_r", "Input gain right",  GAIN_AMP_P_48_DB),
-            METER_GAIN("mout_r", "Output gain right", GAIN_AMP_P_48_DB),
+            CLIPPER_COMMON_STEREO,
+            OSCILLOSCOPE_SWITCHES("", ""),
+            CLIPPER_METERS("", ""),
 
             PORTS_END
         };
 
-        static const int plugin_classes[]       = { C_DELAY, -1 };
-        static const int clap_features_mono[]   = { CF_AUDIO_EFFECT, CF_UTILITY, CF_MONO, -1 };
-        static const int clap_features_stereo[] = { CF_AUDIO_EFFECT, CF_UTILITY, CF_STEREO, -1 };
+        static const int plugin_classes[]       = { C_DYNAMICS, -1 };
+        static const int clap_features_mono[]   = { CF_AUDIO_EFFECT, CF_MASTERING, CF_MONO, -1 };
+        static const int clap_features_stereo[] = { CF_AUDIO_EFFECT, CF_MASTERING, CF_STEREO, -1 };
 
         const meta::bundle_t clipper_bundle =
         {
             "clipper",
-            "Plugin Template",
-            B_UTILITIES,
+            "Clipper",
+            B_DYNAMICS,
             "", // TODO: provide ID of the video on YouTube
-            "" // TODO: write plugin description, should be the same to the english version in 'bundles.json'
+            "Peak clipping tool for maximization of output loudness"
         };
 
         const plugin_t clipper_mono =
         {
-            "Pluginschablone Mono",
-            "Plugin Template Mono",
-            "PS1M",
+            "Clipper Mono",
+            "Clipper Mono",
+            "CL1M",
             &developers::v_sadovnikov,
             "clipper_mono",
             LSP_LV2_URI("clipper_mono"),
             LSP_LV2UI_URI("clipper_mono"),
-            "xxxx",         // TODO: fill valid VST2 ID (4 letters/digits)
-            1,              // TODO: fill valid LADSPA identifier (positive decimal integer)
+            "cl1m",
+            LSP_LADSPA_CLIPPER_BASE + 0,
             LSP_LADSPA_URI("clipper_mono"),
             LSP_CLAP_URI("clipper_mono"),
             LSP_PLUGINS_CLIPPER_VERSION,
             plugin_classes,
             clap_features_mono,
-            E_DUMP_STATE,
+            E_DUMP_STATE | E_INLINE_DISPLAY,
             clipper_mono_ports,
-            "template/plugin.xml",
+            "dynamics/clipper/mono.xml",
             NULL,
             mono_plugin_port_groups,
             &clipper_bundle
@@ -126,21 +178,21 @@ namespace lsp
         {
             "Pluginschablone Stereo",
             "Plugin Template Stereo",
-            "PS1S",
+            "CL1S",
             &developers::v_sadovnikov,
             "clipper_stereo",
             LSP_LV2_URI("clipper_stereo"),
             LSP_LV2UI_URI("clipper_stereo"),
-            "yyyy",         // TODO: fill valid VST2 ID (4 letters/digits)
-            2,              // TODO: fill valid LADSPA identifier (positive decimal integer)
+            "cl1s",
+            LSP_LADSPA_CLIPPER_BASE + 1,
             LSP_LADSPA_URI("clipper_stereo"),
             LSP_CLAP_URI("clipper_stereo"),
             LSP_PLUGINS_CLIPPER_VERSION,
             plugin_classes,
             clap_features_stereo,
-            E_DUMP_STATE,
+            E_DUMP_STATE | E_INLINE_DISPLAY,
             clipper_stereo_ports,
-            "template/plugin.xml",
+            "dynamics/clipper/stereo.xml",
             NULL,
             stereo_plugin_port_groups,
             &clipper_bundle
