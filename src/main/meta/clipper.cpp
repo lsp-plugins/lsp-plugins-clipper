@@ -87,6 +87,7 @@ namespace lsp
             CONTROL("kn", "Overdrive protection knee", U_DB, clipper::ODP_KNEE), \
             LOG_CONTROL("rs", "Overdrive protection resonance", U_HZ, clipper::ODP_RESONANCE), \
             MESH("opc", "Overdrive protection chart", 2, clipper::CURVE_MESH_POINTS), \
+            SWITCH("ce", "Clipper enable", 1.0f), \
             COMBO("cf", "Clipper sigmoid function", 2.0f, sigmoid_functions), \
             LOG_CONTROL("ct", "Clipper sigmoid threshold", U_GAIN_AMP, clipper::CLIP_THRESHOLD), \
             CONTROL("cp", "Clipper sigmoid pumping", U_DB, clipper::CLIP_PUMPING), \
@@ -131,8 +132,10 @@ namespace lsp
             // Input and output audio ports
             PORTS_STEREO_PLUGIN,
             CLIPPER_COMMON_STEREO,
-            OSCILLOSCOPE_SWITCHES("", ""),
-            CLIPPER_METERS("", ""),
+            OSCILLOSCOPE_SWITCHES("_l", " Left"),
+            OSCILLOSCOPE_SWITCHES("_r", " Right"),
+            CLIPPER_METERS("_l", " Left"),
+            CLIPPER_METERS("_r", " Right"),
 
             PORTS_END
         };
