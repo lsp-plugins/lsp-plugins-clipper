@@ -493,6 +493,74 @@ namespace lsp
             c->a            = (k - (2.0*dy)*dx1)*dx2;
         }
 
+        float clipper::odp_curve(const compressor_t *c, float x)
+        {
+            if (x >= c->x2)
+                return c->x0;
+            if (x <= c->x1)
+                return x;
+
+            float v    = x - c->x1;
+            return ((v * c->a + c->b) * v + c->c)*v + c->x1;
+        }
+
+        float clipper::odp_gain(const compressor_t *c, float x)
+        {
+            if (x >= c->x2)
+                return c->x0 / x;
+            if (x <= c->x1)
+                return 1.0f;
+
+            float v    = x - c->x1;
+            return (((v * c->a + c->b) * v + c->c)*v + c->x1)/x;
+        }
+
+        void clipper::odp_curve(float *dst, const float *x, const compressor_t *c, size_t count)
+        {
+            for (size_t i=0; i<count; ++i)
+                dst[i]      = odp_curve(c, x[i]);
+        }
+
+        void clipper::odp_gain(float *dst, const float *x, const compressor_t *c, size_t count)
+        {
+            for (size_t i=0; i<count; ++i)
+                dst[i]      = odp_gain(c, x[i]);
+        }
+
+        void clipper::odp_link(float *dst, const float *src, float link, size_t count)
+        {
+            const float rlink = 1.0f - link;
+            for (size_t i=0; i<count; ++i)
+            {
+                const float k = rlink + src[i] * link;
+                dst[i]  = dst[i] * k;
+            }
+        }
+
+        float clipper::clip_curve(const clip_params_t *p, float x)
+        {
+            float s = x * p->fPumping;
+            if (s > p->fThreshold)
+            {
+                s               = (s - p->fThreshold) * p->fScaling;
+                return p->pFunc(s) * p->fKnee + p->fThreshold;
+            }
+            else if (s < -p->fThreshold)
+            {
+                s               = (s + p->fThreshold) * p->fScaling;
+                return p->pFunc(s) * p->fKnee - p->fThreshold;
+            }
+
+            return s;
+        }
+
+        void clipper::clip_curve(float *dst, const float *x, const clip_params_t *p, size_t count)
+        {
+            for (size_t i=0; i<count; ++i)
+                dst[i]      = clip_curve(p, x[i]);
+        }
+
+
         void clipper::update_settings()
         {
             const bool bypass       = pBypass->value() >= 0.5f;
@@ -534,8 +602,448 @@ namespace lsp
             set_latency(latency);
         }
 
+        void clipper::bind_input_buffers()
+        {
+            sLufs.fIn           = GAIN_AMP_M_INF_DB;
+            sLufs.fRed          = GAIN_AMP_P_72_DB;
+
+            fOutLufs            = GAIN_AMP_M_INF_DB;
+
+            for (size_t i=0; i<nChannels; ++i)
+            {
+                channel_t *c        = &vChannels[i];
+
+                c->vIn              = c->pDataIn->buffer<float>();
+                c->vOut             = c->pDataOut->buffer<float>();
+
+                c->fIn              = GAIN_AMP_M_INF_DB;
+                c->fOut             = GAIN_AMP_M_INF_DB;
+                c->fRed             = GAIN_AMP_P_72_DB;
+
+                c->fOdpIn           = GAIN_AMP_M_INF_DB;
+                c->fOdpOut          = GAIN_AMP_M_INF_DB;
+                c->fOdpRed          = GAIN_AMP_P_72_DB;
+
+                c->fClipIn          = GAIN_AMP_M_INF_DB;
+                c->fClipOut         = GAIN_AMP_M_INF_DB;
+                c->fClipRed         = GAIN_AMP_P_72_DB;
+            }
+        }
+
+        void clipper::advance_buffers(size_t samples)
+        {
+            for (size_t i=0; i<nChannels; ++i)
+            {
+                channel_t *c        = &vChannels[i];
+
+                c->vIn             += samples;
+                c->vOut            += samples;
+            }
+        }
+
+        void clipper::process_clipper(size_t samples)
+        {
+            if (nChannels > 1)
+            {
+                // Stereo version
+                channel_t *l            = &vChannels[0];
+                channel_t *r            = &vChannels[1];
+
+                dsp::mul_k3(l->vData, l->vIn, fInGain, samples);
+                dsp::mul_k3(r->vData, r->vIn, fInGain, samples);
+
+                // Process sidechain signal
+                if (fStereoLink >= 1.0f)
+                {
+                    dsp::lr_to_mid(r->vSc, l->vData, r->vData, samples);
+                    l->sSc.process(l->vSc, const_cast<const float **>(&r->vSc), samples);
+                    r->sSc.process(r->vSc, const_cast<const float **>(&r->vSc), samples);
+                }
+                else if (fStereoLink > 0.0f)
+                {
+                    dsp::mix_copy2(l->vSc, l->vData, r->vData, 1.0f - fStereoLink * 0.5f, fStereoLink * 0.5f, samples);
+                    dsp::mix_copy2(r->vSc, l->vData, r->vData, fStereoLink * 0.5f, 1.0f - fStereoLink * 0.5f, samples);
+
+                    l->sSc.process(l->vSc, const_cast<const float **>(&l->vSc), samples);
+                    r->sSc.process(r->vSc, const_cast<const float **>(&r->vSc), samples);
+                }
+                else
+                {
+                    l->sSc.process(l->vSc, const_cast<const float **>(&l->vData), samples);
+                    r->sSc.process(r->vSc, const_cast<const float **>(&r->vData), samples);
+                }
+                l->sScDelay.process(l->vData, l->vData, samples);
+                r->sScDelay.process(r->vData, r->vData, samples);
+
+                // Measure signal at the input of the band
+                const size_t idx_in_l   = dsp::abs_max_index(l->vData, samples);
+                const size_t idx_in_r   = dsp::abs_max_index(r->vData, samples);
+                const float in_l        = fabsf(l->vData[idx_in_l]);
+                const float in_r        = fabsf(r->vData[idx_in_r]);
+                l->sInGraph.process(l->vData, samples);
+                r->sInGraph.process(r->vData, samples);
+
+                // Measure input loudness
+                sLufs.sMeter.bind(0, NULL, l->vData);
+                sLufs.sMeter.bind(1, NULL, r->vData);
+                sLufs.sMeter.process(vBuffer, samples);
+
+                size_t max_index        = dsp::abs_max_index(vBuffer, samples);
+                sLufs.fIn               = lsp_max(sLufs.fIn, vBuffer[max_index]);
+
+                // Apply LUFS limiter
+                if (nFlags & CF_LUFS_LIMITER)
+                {
+                    sLufs.sGain.process(vBuffer, vBuffer, samples);
+                    sLufs.fRed              = lsp_min(sLufs.fRed, vBuffer[max_index]);
+
+                    dsp::mul2(l->vData, vBuffer, samples);
+                    dsp::mul2(r->vData, vBuffer, samples);
+                }
+                else
+                    sLufs.fRed              = GAIN_AMP_0_DB;
+
+                // Overdrive protection
+                if (nFlags & CF_ODP_ENABLED)
+                {
+                    // Measure input signal
+                    const size_t odp_idx_l  = dsp::abs_max_index(l->vSc, samples);
+                    const size_t odp_idx_r  = dsp::abs_max_index(r->vSc, samples);
+                    const float odp_in_l    = l->vSc[odp_idx_l];
+                    const float odp_in_r    = r->vSc[odp_idx_r];
+
+                    // Apply ODP
+                    odp_gain(l->vSc, l->vSc, &sComp, samples);
+                    odp_gain(r->vSc, r->vSc, &sComp, samples);
+                    dsp::mul2(l->vData, l->vSc, samples);
+                    dsp::mul2(r->vData, r->vSc, samples);
+
+                    // Measure output
+                    const float odp_red_l   = l->vSc[odp_idx_l];
+                    const float odp_red_r   = r->vSc[odp_idx_r];
+                    const float odp_out_l   = odp_in_l * odp_red_l;
+                    const float odp_out_r   = odp_in_r * odp_red_r;
+
+                    l->fOdpIn               = lsp_max(l->fOdpIn, odp_in_l);
+                    l->fOdpOut              = lsp_max(l->fOdpOut, odp_out_l);
+                    l->fOdpRed              = lsp_min(l->fOdpRed, odp_red_l);
+
+                    r->fOdpIn               = lsp_max(r->fOdpIn, odp_in_r);
+                    r->fOdpOut              = lsp_max(r->fOdpOut, odp_out_r);
+                    r->fOdpRed              = lsp_min(r->fOdpRed, odp_red_r);
+                }
+                else
+                {
+                    dsp::fill_one(l->vSc, samples);
+                    dsp::fill_one(r->vSc, samples);
+
+                    l->fOdpIn               = GAIN_AMP_M_INF_DB;
+                    l->fOdpOut              = GAIN_AMP_M_INF_DB;
+                    l->fOdpRed              = GAIN_AMP_0_DB;
+
+                    r->fOdpIn               = GAIN_AMP_M_INF_DB;
+                    r->fOdpOut              = GAIN_AMP_M_INF_DB;
+                    r->fOdpRed              = GAIN_AMP_0_DB;
+                }
+
+                // Clipping
+                if (nFlags & CF_CLIP_ENABLED)
+                {
+                    // Mesure input
+                    const size_t clip_idx_l = dsp::abs_max_index(l->vData, samples);
+                    const size_t clip_idx_r = dsp::abs_max_index(r->vData, samples);
+                    const float clip_in_l   = fabsf(l->vData[clip_idx_l]);
+                    const float clip_in_r   = fabsf(r->vData[clip_idx_r]);
+
+                    // Do clipping
+                    clip_curve(l->vData, l->vData, &sClip, samples);
+                    clip_curve(r->vData, r->vData, &sClip, samples);
+
+                    // Measure output
+                    const float clip_out_l  = fabsf(l->vData[clip_idx_l]);
+                    const float clip_out_r  = fabsf(r->vData[clip_idx_r]);
+                    const float clip_red_l  = (clip_in_l >= GAIN_AMP_M_120_DB) ? clip_out_l / clip_in_l : GAIN_AMP_0_DB;
+                    const float clip_red_r  = (clip_in_r >= GAIN_AMP_M_120_DB) ? clip_out_r / clip_in_r : GAIN_AMP_0_DB;
+
+                    l->fClipIn              = lsp_max(l->fClipIn, clip_in_l);
+                    l->fClipOut             = lsp_max(l->fClipOut, clip_out_l);
+                    l->fClipRed             = lsp_min(l->fClipRed, clip_red_l);
+
+                    r->fClipIn              = lsp_max(r->fClipIn, clip_in_r);
+                    r->fClipOut             = lsp_max(r->fClipOut, clip_out_r);
+                    r->fClipRed             = lsp_min(r->fClipRed, clip_red_r);
+                }
+                else
+                {
+                    l->fClipIn              = GAIN_AMP_M_INF_DB;
+                    l->fClipOut             = GAIN_AMP_M_INF_DB;
+                    l->fClipRed             = GAIN_AMP_0_DB;
+
+                    r->fClipIn              = GAIN_AMP_M_INF_DB;
+                    r->fClipOut             = GAIN_AMP_M_INF_DB;
+                    r->fClipRed             = GAIN_AMP_0_DB;
+                }
+
+                // Perform output metering
+                const float out_l       = fabsf(l->vData[idx_in_l]);
+                const float out_r       = fabsf(r->vData[idx_in_r]);
+                const float red_l       = (in_l >= GAIN_AMP_M_120_DB) ? out_l / in_l : GAIN_AMP_0_DB;
+                const float red_r       = (in_r >= GAIN_AMP_M_120_DB) ? out_r / in_r : GAIN_AMP_0_DB;
+                l->sOutGraph.process(l->vData, samples);
+                r->sOutGraph.process(r->vData, samples);
+
+                l->fIn                  = lsp_max(l->fIn, in_l);
+                l->fOut                 = lsp_max(l->fOut, out_l);
+                l->fRed                 = lsp_min(l->fRed, red_l);
+
+                r->fIn                  = lsp_max(r->fIn, in_r);
+                r->fOut                 = lsp_max(r->fOut, out_r);
+                r->fRed                 = lsp_min(r->fRed, red_r);
+
+                // Apply gain boosting compensation
+                if (!(nFlags & CF_BOOSTING))
+                {
+                    dsp::mul_k2(l->vData, 1.0f / fThresh, samples);
+                    dsp::mul_k2(r->vData, 1.0f / fThresh, samples);
+                }
+            }
+            else
+            {
+                // Mono version
+                channel_t *c            = &vChannels[0];
+
+                dsp::mul_k3(c->vData, c->vIn, fInGain, samples);
+
+                // Process sidechain signal
+                if (nFlags & CF_LUFS_LIMITER)
+                {
+                    c->sSc.process(c->vSc, const_cast<const float **>(&c->vData), samples);
+                }
+                c->sScDelay.process(c->vData, c->vData, samples);
+
+                // Measure signal at the input of the band
+                const size_t idx_in     = dsp::abs_max_index(c->vData, samples);
+                const float in          = fabsf(c->vData[idx_in]);
+                c->sInGraph.process(c->vData, samples);
+
+                // Overdrive protection
+                if (nFlags & CF_ODP_ENABLED)
+                {
+                    // Measure input signal
+                    const size_t odp_idx    = dsp::abs_max_index(c->vSc, samples);
+                    const float odp_in      = c->vSc[odp_idx];
+
+                    // Apply ODP
+                    odp_gain(c->vSc, c->vSc, &sComp, samples);
+                    dsp::mul2(c->vData, c->vSc, samples);
+
+                    // Measure output
+                    const float odp_red     = c->vSc[odp_idx];
+                    const float odp_out     = odp_in * odp_red;
+
+                    c->fOdpIn               = lsp_max(c->fOdpIn, odp_in);
+                    c->fOdpOut              = lsp_max(c->fOdpOut, odp_out);
+                    c->fOdpRed              = lsp_min(c->fOdpRed, odp_red);
+                }
+                else
+                {
+                    dsp::fill_one(c->vSc, samples);
+
+                    c->fOdpIn               = GAIN_AMP_M_INF_DB;
+                    c->fOdpOut              = GAIN_AMP_M_INF_DB;
+                    c->fOdpRed              = GAIN_AMP_0_DB;
+                }
+
+                // Clipping
+                if (nFlags & CF_CLIP_ENABLED)
+                {
+                    // Mesure input
+                    const size_t clip_idx   = dsp::abs_max_index(c->vData, samples);
+                    const float clip_in     = fabsf(c->vData[clip_idx]);
+
+                    // Do clipping
+                    clip_curve(c->vData, c->vData, &sClip, samples);
+
+                    // Measure output
+                    const float clip_out    = fabsf(c->vData[clip_idx]);
+                    const float clip_red    = (clip_in >= GAIN_AMP_M_120_DB) ? clip_out / clip_in : GAIN_AMP_0_DB;
+
+                    c->fClipIn              = lsp_max(c->fClipIn, clip_in);
+                    c->fClipOut             = lsp_max(c->fClipOut, clip_out);
+                    c->fClipRed             = lsp_min(c->fClipRed, clip_red);
+                }
+                else
+                {
+                    c->fClipIn              = GAIN_AMP_M_INF_DB;
+                    c->fClipOut             = GAIN_AMP_M_INF_DB;
+                    c->fClipRed             = GAIN_AMP_0_DB;
+                }
+
+                // Perform output metering
+                const float out         = fabsf(c->vData[idx_in]);
+                const float red         = (in >= GAIN_AMP_M_120_DB) ? out / in : GAIN_AMP_0_DB;
+                c->sOutGraph.process(c->vData, samples);
+
+                c->fIn                  = lsp_max(c->fIn, in);
+                c->fOut                 = lsp_max(c->fOut, out);
+                c->fRed                 = lsp_min(c->fRed, red);
+
+                // Apply gain boosting compensation
+                if (!(nFlags & CF_BOOSTING))
+                    dsp::mul_k2(c->vData, 1.0f / fThresh, samples);
+            }
+        }
+
+        void clipper::output_signal(size_t samples)
+        {
+            // Process the signal
+            for (size_t i=0; i<nChannels; ++i)
+            {
+                channel_t *c        = &vChannels[i];
+
+                dsp::mul_k2(c->vData, fOutGain, samples);
+                c->sDither.process(c->vData, c->vData, samples);
+                sOutMeter.bind(i, NULL, c->vData);
+
+                c->sDryDelay.process(vBuffer, c->vIn, samples);
+                c->sBypass.process(c->vOut, vBuffer, c->vData, samples);
+            }
+
+            // Measure output loudness
+            sOutMeter.process(vBuffer, samples);
+            fOutLufs            = lsp_max(fOutLufs, dsp::abs_max(vBuffer, samples));
+        }
+
+        void clipper::output_meters()
+        {
+            sLufs.pIn->set_value(dspu::gain_to_lufs(sLufs.fIn));
+            sLufs.pRed->set_value(sLufs.fRed);
+
+            pLufsOut->set_value(dspu::gain_to_lufs(fOutLufs));
+
+            for (size_t i=0; i<nChannels; ++i)
+            {
+                channel_t *c    = &vChannels[i];
+
+                c->pIn->set_value(c->fIn);
+                c->pOut->set_value(c->fOut);
+                c->pRed->set_value(c->fRed);
+
+                c->pOdpIn->set_value(c->fOdpIn);
+                c->pOdpOut->set_value(c->fOdpOut);
+                c->pOdpRed->set_value(c->fOdpRed);
+
+                c->pClipIn->set_value(c->fClipIn);
+                c->pClipOut->set_value(c->fClipOut);
+                c->pClipRed->set_value(c->fClipRed);
+            }
+        }
+
+        void clipper::output_mesh_curves(size_t samples)
+        {
+            plug::mesh_t *mesh  = NULL;
+
+            // Sync ODP curve
+            if (nFlags & CF_SYNC_ODP)
+            {
+                mesh                = (sOdp.pCurveMesh != NULL) ? sOdp.pCurveMesh->buffer<plug::mesh_t>() : NULL;
+                if ((mesh != NULL) && (mesh->isEmpty()))
+                {
+                    dsp::copy(mesh->pvData[0], vOdp, meta::clipper::CURVE_MESH_POINTS);
+                    odp_curve(mesh->pvData[1], vOdp, &sComp, meta::clipper::CURVE_MESH_POINTS);
+                    mesh->data(2, meta::clipper::CURVE_MESH_POINTS);
+
+                    // Mark mesh as synchronized
+                    nFlags             &= uint32_t(~CF_SYNC_ODP);
+                }
+            }
+
+            // Sync sigmoid curve
+            if (nFlags & CF_SYNC_CLIP)
+            {
+                mesh                = (sClip.pCurveMesh != NULL) ? sClip.pCurveMesh->buffer<plug::mesh_t>() : NULL;
+                if ((mesh != NULL) && (mesh->isEmpty()))
+                {
+                    dsp::copy(mesh->pvData[0], vLinSigmoid, meta::clipper::CURVE_MESH_POINTS);
+                    clip_curve(mesh->pvData[1], vLinSigmoid, &sClip, meta::clipper::CURVE_MESH_POINTS);
+                    dsp::copy(mesh->pvData[2], vLogSigmoid, meta::clipper::CURVE_MESH_POINTS);
+                    clip_curve(mesh->pvData[3], vLogSigmoid, &sClip, meta::clipper::CURVE_MESH_POINTS);
+                    mesh->data(4, meta::clipper::CURVE_MESH_POINTS);
+
+                    // Mark mesh as synchronized
+                    nFlags             &= uint32_t(~CF_SYNC_CLIP);
+                }
+            }
+
+            // Output data for each channel
+            for (size_t i=0; i<nChannels; ++i)
+            {
+                channel_t *c        = &vChannels[i];
+
+                // Output oscilloscope graphs for output clipper
+                plug::mesh_t *mesh    = c->pTimeMesh->buffer<plug::mesh_t>();
+                if ((mesh != NULL) && (mesh->isEmpty()))
+                {
+                    // Fill time values
+                    float *t        = mesh->pvData[0];
+                    float *in       = mesh->pvData[1];
+                    float *out      = mesh->pvData[2];
+                    float *red      = mesh->pvData[3];
+
+                    dsp::copy(&t[2], vTime, meta::clipper::TIME_MESH_POINTS);
+                    dsp::copy(&in[2], c->sInGraph.data(), meta::clipper::TIME_MESH_POINTS);
+                    dsp::copy(&out[2], c->sOutGraph.data(), meta::clipper::TIME_MESH_POINTS);
+
+                    for (size_t k=2; k<meta::clipper::TIME_MESH_POINTS + 2; ++k)
+                        red[k]      = lsp_max(out[k], GAIN_AMP_M_120_DB) / lsp_max(in[k], GAIN_AMP_M_120_DB);
+
+                    // Generate extra points
+                    t[0]            = t[2] + meta::clipper::TIME_HISTORY_GAP;
+                    t[1]            = t[0];
+                    in[0]           = 0.0f;
+                    in[1]           = in[2];
+                    out[0]          = out[2];
+                    out[1]          = out[2];
+                    red[0]          = red[2];
+                    red[1]          = red[2];
+
+                    t              += meta::clipper::TIME_MESH_POINTS + 2;
+                    in             += meta::clipper::TIME_MESH_POINTS + 2;
+                    out            += meta::clipper::TIME_MESH_POINTS + 2;
+                    red            += meta::clipper::TIME_MESH_POINTS + 2;
+
+                    t[0]            = t[-1] - meta::clipper::TIME_HISTORY_GAP;
+                    t[1]            = t[0];
+                    in[0]           = in[-1];
+                    in[1]           = 0.0f;
+                    out[0]          = out[-1];
+                    out[1]          = out[-1];
+                    red[0]          = red[-1];
+                    red[1]          = red[-1];
+
+                    // Notify mesh contains data
+                    mesh->data(4, meta::clipper::TIME_MESH_POINTS + 4);
+                }
+            }
+        }
+
         void clipper::process(size_t samples)
         {
+            bind_input_buffers();
+
+            for (size_t offset = 0; offset < samples; )
+            {
+                size_t to_do    = lsp_min(samples - offset, BUFFER_SIZE);
+
+                process_clipper(to_do);
+                output_signal(to_do);
+
+                advance_buffers(to_do);
+                offset         += to_do;
+            }
+
+            output_meters();
+            output_mesh_curves(samples);
         }
 
         void clipper::ui_activated()

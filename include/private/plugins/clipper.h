@@ -197,10 +197,25 @@ namespace lsp
 
                 static bool             update_odp_params(odp_params_t *params);
                 static bool             update_clip_params(clip_params_t *params);
+
                 static void             calc_odp_compressor(compressor_t *c, const odp_params_t *params);
+                static inline float     odp_curve(const compressor_t *c, float x);
+                static inline float     odp_gain(const compressor_t *c, float x);
+                static void             odp_curve(float *dst, const float *x, const compressor_t *c, size_t count);
+                static void             odp_gain(float *dst, const float *x, const compressor_t *c, size_t count);
+                static void             odp_link(float *dst, const float *src, float link, size_t count);
+
+                static float            clip_curve(const clip_params_t *p, float x);
+                static void             clip_curve(float *dst, const float *x, const clip_params_t *p, size_t count);
 
             protected:
                 void                    do_destroy();
+                void                    bind_input_buffers();
+                void                    process_clipper(size_t samples);
+                void                    output_signal(size_t samples);
+                void                    advance_buffers(size_t samples);
+                void                    output_meters();
+                void                    output_mesh_curves(size_t samples);
 
             public:
                 explicit clipper(const meta::plugin_t *meta);
