@@ -93,10 +93,10 @@ namespace lsp
             static constexpr float  ODP_THRESHOLD_DFL       = -1.5f;
             static constexpr float  ODP_THRESHOLD_STEP      = 0.01f;
 
-            static constexpr float  ODP_RESONANCE_MIN       = SPEC_FREQ_MIN;
-            static constexpr float  ODP_RESONANCE_MAX       = SPEC_FREQ_MAX;
-            static constexpr float  ODP_RESONANCE_DFL       = 50.0f;
-            static constexpr float  ODP_RESONANCE_STEP      = 0.00025f;
+            static constexpr float  ODP_REACT_MIN           = 1.0f;
+            static constexpr float  ODP_REACT_MAX           = 200.0f;
+            static constexpr float  ODP_REACT_DFL           = 50.0f;
+            static constexpr float  ODP_REACT_STEP          = 0.005f;
 
             static constexpr float  CLIP_THRESHOLD_MIN      = GAIN_AMP_M_INF_DB;
             static constexpr float  CLIP_THRESHOLD_MAX      = GAIN_AMP_0_DB;

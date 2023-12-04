@@ -93,7 +93,7 @@ namespace lsp
 
             sOdp.pThreshold         = NULL;
             sOdp.pKnee              = NULL;
-            sOdp.pResonance         = NULL;
+            sOdp.pReactivity        = NULL;
             sOdp.pCurveMesh         = NULL;
 
             sClip.pFunc             = NULL;
@@ -117,6 +117,7 @@ namespace lsp
 
             fInGain                 = GAIN_AMP_0_DB;
             fOutGain                = GAIN_AMP_0_DB;
+            fInLufs                 = GAIN_AMP_M_INF_DB;
             fOutLufs                = GAIN_AMP_M_INF_DB;
             fThresh                 = GAIN_AMP_0_DB;
             fStereoLink             = 0.0f;
@@ -132,6 +133,7 @@ namespace lsp
             pBypass                 = NULL;
             pGainIn                 = NULL;
             pGainOut                = NULL;
+            pLufsIn                 = NULL;
             pLufsOut                = NULL;
             pThresh                 = NULL;
             pBoosting               = NULL;
@@ -211,6 +213,18 @@ namespace lsp
             // Initialize analyzer
             sLufs.sMeter.construct();
             sLufs.sGain.construct();
+
+            sInMeter.construct();
+            sInMeter.init(nChannels, meta::clipper::LUFS_MEASUREMENT_PERIOD);
+            sInMeter.set_period(meta::clipper::LUFS_MEASUREMENT_PERIOD);
+            sInMeter.set_weighting(dspu::bs::WEIGHT_K);
+            if (nChannels > 1)
+            {
+                sInMeter.set_designation(0, dspu::bs::CHANNEL_LEFT);
+                sInMeter.set_designation(1, dspu::bs::CHANNEL_RIGHT);
+            }
+            else
+                sInMeter.set_designation(0, dspu::bs::CHANNEL_CENTER);
 
             sOutMeter.construct();
             sOutMeter.init(nChannels, meta::clipper::LUFS_MEASUREMENT_PERIOD);
@@ -326,6 +340,7 @@ namespace lsp
             sLufs.pThreshold    = trace_port(ports[port_id++]);
             sLufs.pIn           = trace_port(ports[port_id++]);
             sLufs.pRed          = trace_port(ports[port_id++]);
+            pLufsIn             = trace_port(ports[port_id++]);
             pLufsOut            = trace_port(ports[port_id++]);
             pThresh             = trace_port(ports[port_id++]);
             pBoosting           = trace_port(ports[port_id++]);
@@ -337,7 +352,7 @@ namespace lsp
             sOdp.pOn                = trace_port(ports[port_id++]);
             sOdp.pThreshold         = trace_port(ports[port_id++]);
             sOdp.pKnee              = trace_port(ports[port_id++]);
-            sOdp.pResonance         = trace_port(ports[port_id++]);
+            sOdp.pReactivity        = trace_port(ports[port_id++]);
             sOdp.pCurveMesh         = trace_port(ports[port_id++]);
             sClip.pOn               = trace_port(ports[port_id++]);
             sClip.pFunction         = trace_port(ports[port_id++]);
@@ -395,13 +410,14 @@ namespace lsp
 
         void clipper::update_sample_rate(long sr)
         {
-            const size_t max_odp_delay      = dspu::hz_to_samples(sr, meta::clipper::ODP_RESONANCE_MIN) * 0.5f;
+            const size_t max_odp_delay      = dspu::millis_to_samples(sr, meta::clipper::ODP_REACT_MAX) * 0.5f;
             const size_t samples_per_dot    = dspu::seconds_to_samples(
                 sr, meta::clipper::TIME_HISTORY_MAX / meta::clipper::TIME_MESH_POINTS);
 
+            sInMeter.set_sample_rate(sr);
+            sOutMeter.set_sample_rate(sr);
             sLufs.sMeter.set_sample_rate(sr);
             sLufs.sGain.set_sample_rate(sr);
-            sOutMeter.set_sample_rate(sr);
 
             for (size_t i=0; i<nChannels; ++i)
             {
@@ -410,7 +426,7 @@ namespace lsp
                 c->sBypass.init(sr);
                 c->sDryDelay.init(max_odp_delay);
                 c->sScDelay.init(max_odp_delay);
-                c->sSc.init(1, 1000.0f / meta::clipper::ODP_RESONANCE_MIN);
+                c->sSc.init(1, meta::clipper::ODP_REACT_MAX);
                 c->sSc.set_sample_rate(sr);
                 c->sInGraph.init(meta::clipper::TIME_MESH_POINTS, samples_per_dot);
                 c->sOutGraph.init(meta::clipper::TIME_MESH_POINTS, samples_per_dot);
@@ -567,7 +583,7 @@ namespace lsp
             const size_t dither_bits= decode_dithering(pDithering->value());
             fThresh                 = dspu::db_to_gain(-pThresh->value());
 
-            fInGain                 = pGainIn->value();
+            fInGain                 = pGainIn->value() * fThresh;
             fOutGain                = pGainOut->value();
             nFlags                  = lsp_setflag(nFlags, CF_BOOSTING, pBoosting->value() >= 0.5f);
 
@@ -587,12 +603,18 @@ namespace lsp
                 nFlags                 |= CF_SYNC_CLIP;
 
             // Adjust the compensation delays
-            const size_t latency        = dspu::hz_to_samples(fSampleRate, sOdp.pResonance->value()) * 0.5f;
+            const float reactivity      = sOdp.pReactivity->value();
+            const size_t latency        = dspu::millis_to_samples(fSampleRate, reactivity) * 0.5f;
 
             // Compute the final latency
             for (size_t i=0; i<nChannels; ++i)
             {
                 channel_t *c            = &vChannels[i];
+
+                // Update sidechain reactivity
+                c->sSc.set_reactivity(reactivity);
+                c->sSc.set_mode(dspu::SCM_RMS);
+                c->sSc.set_stereo_mode(dspu::SCSM_STEREO);
 
                 c->sBypass.set_bypass(bypass);
                 c->sDither.set_bits(dither_bits);
@@ -607,6 +629,7 @@ namespace lsp
             sLufs.fIn           = GAIN_AMP_M_INF_DB;
             sLufs.fRed          = GAIN_AMP_P_72_DB;
 
+            fInLufs             = GAIN_AMP_M_INF_DB;
             fOutLufs            = GAIN_AMP_M_INF_DB;
 
             for (size_t i=0; i<nChannels; ++i)
@@ -649,8 +672,28 @@ namespace lsp
                 channel_t *l            = &vChannels[0];
                 channel_t *r            = &vChannels[1];
 
+                // Measure input loudness
                 dsp::mul_k3(l->vData, l->vIn, fInGain, samples);
                 dsp::mul_k3(r->vData, r->vIn, fInGain, samples);
+
+                sLufs.sMeter.bind(0, NULL, l->vData);
+                sLufs.sMeter.bind(1, NULL, r->vData);
+                sLufs.sMeter.process(vBuffer, samples);
+
+                size_t max_index        = dsp::abs_max_index(vBuffer, samples);
+                sLufs.fIn               = lsp_max(sLufs.fIn, vBuffer[max_index]);
+
+                // Apply LUFS limiter
+                if (nFlags & CF_LUFS_LIMITER)
+                {
+                    sLufs.sGain.process(vBuffer, vBuffer, samples);
+                    sLufs.fRed              = lsp_min(sLufs.fRed, vBuffer[max_index]);
+
+                    dsp::mul2(l->vData, vBuffer, samples);
+                    dsp::mul2(r->vData, vBuffer, samples);
+                }
+                else
+                    sLufs.fRed              = GAIN_AMP_0_DB;
 
                 // Process sidechain signal
                 if (fStereoLink >= 1.0f)
@@ -682,26 +725,6 @@ namespace lsp
                 const float in_r        = fabsf(r->vData[idx_in_r]);
                 l->sInGraph.process(l->vData, samples);
                 r->sInGraph.process(r->vData, samples);
-
-                // Measure input loudness
-                sLufs.sMeter.bind(0, NULL, l->vData);
-                sLufs.sMeter.bind(1, NULL, r->vData);
-                sLufs.sMeter.process(vBuffer, samples);
-
-                size_t max_index        = dsp::abs_max_index(vBuffer, samples);
-                sLufs.fIn               = lsp_max(sLufs.fIn, vBuffer[max_index]);
-
-                // Apply LUFS limiter
-                if (nFlags & CF_LUFS_LIMITER)
-                {
-                    sLufs.sGain.process(vBuffer, vBuffer, samples);
-                    sLufs.fRed              = lsp_min(sLufs.fRed, vBuffer[max_index]);
-
-                    dsp::mul2(l->vData, vBuffer, samples);
-                    dsp::mul2(r->vData, vBuffer, samples);
-                }
-                else
-                    sLufs.fRed              = GAIN_AMP_0_DB;
 
                 // Overdrive protection
                 if (nFlags & CF_ODP_ENABLED)
@@ -812,13 +835,28 @@ namespace lsp
                 // Mono version
                 channel_t *c            = &vChannels[0];
 
+                // Measure input loudness
                 dsp::mul_k3(c->vData, c->vIn, fInGain, samples);
 
-                // Process sidechain signal
+                sLufs.sMeter.bind(0, NULL, c->vData);
+                sLufs.sMeter.process(vBuffer, samples);
+
+                size_t max_index        = dsp::abs_max_index(vBuffer, samples);
+                sLufs.fIn               = lsp_max(sLufs.fIn, vBuffer[max_index]);
+
+                // Apply LUFS limiter
                 if (nFlags & CF_LUFS_LIMITER)
                 {
-                    c->sSc.process(c->vSc, const_cast<const float **>(&c->vData), samples);
+                    sLufs.sGain.process(vBuffer, vBuffer, samples);
+                    sLufs.fRed              = lsp_min(sLufs.fRed, vBuffer[max_index]);
+
+                    dsp::mul2(c->vData, vBuffer, samples);
                 }
+                else
+                    sLufs.fRed              = GAIN_AMP_0_DB;
+
+                // Process sidechain signal
+                c->sSc.process(c->vSc, const_cast<const float **>(&c->vData), samples);
                 c->sScDelay.process(c->vData, c->vData, samples);
 
                 // Measure signal at the input of the band
@@ -904,12 +942,16 @@ namespace lsp
                 dsp::mul_k2(c->vData, fOutGain, samples);
                 c->sDither.process(c->vData, c->vData, samples);
                 sOutMeter.bind(i, NULL, c->vData);
+                sInMeter.bind(i, NULL, c->vIn);
 
                 c->sDryDelay.process(vBuffer, c->vIn, samples);
                 c->sBypass.process(c->vOut, vBuffer, c->vData, samples);
             }
 
-            // Measure output loudness
+            // Measure input and output loudness
+            sInMeter.process(vBuffer, samples);
+            fInLufs             = lsp_max(fOutLufs, dsp::abs_max(vBuffer, samples));
+
             sOutMeter.process(vBuffer, samples);
             fOutLufs            = lsp_max(fOutLufs, dsp::abs_max(vBuffer, samples));
         }
@@ -919,13 +961,14 @@ namespace lsp
             sLufs.pIn->set_value(dspu::gain_to_lufs(sLufs.fIn));
             sLufs.pRed->set_value(sLufs.fRed);
 
+            pLufsIn->set_value(dspu::gain_to_lufs(fInLufs));
             pLufsOut->set_value(dspu::gain_to_lufs(fOutLufs));
 
             for (size_t i=0; i<nChannels; ++i)
             {
                 channel_t *c    = &vChannels[i];
 
-                c->pIn->set_value(c->fIn);
+                c->pIn->set_value(c->fIn / fThresh);
                 c->pOut->set_value(c->fOut);
                 c->pRed->set_value(c->fRed);
 

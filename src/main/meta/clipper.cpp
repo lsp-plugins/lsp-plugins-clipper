@@ -75,8 +75,9 @@ namespace lsp
             OUT_GAIN, \
             SWITCH("lufs_on", "Enable input LUFS limitation", 1.0f), \
             CONTROL("lufs_th", "Input LUFS limiter threshold", U_LUFS, clipper::LUFS_THRESH), \
-            LUFS_METER("lufs_il", "Input LUFS value", 24.0f), \
+            LUFS_METER("lufs_rl", "Reduction LUFS value", 24.0f), \
             METER_OUT_GAIN("lufs_gr", "Input LUFS gain reduction", GAIN_AMP_0_DB), \
+            LUFS_METER("lufs_il", "Input LUFS value", 24.0f), \
             LUFS_METER("lufs_ol", "Output LUFS value", 24.0f), \
             CONTROL("thresh", "Clipping threshold", U_DB, clipper::THRESHOLD), \
             SWITCH("boost", "Boosting mode", 1.0f), \
@@ -85,7 +86,7 @@ namespace lsp
             SWITCH("op", "Overdrive protection", 1.0f), \
             CONTROL("th", "Overdrive protection threshold", U_DB, clipper::ODP_THRESHOLD), \
             CONTROL("kn", "Overdrive protection knee", U_DB, clipper::ODP_KNEE), \
-            LOG_CONTROL("rs", "Overdrive protection resonance", U_HZ, clipper::ODP_RESONANCE), \
+            LOG_CONTROL("or", "Overdrive protection reactivity", U_MSEC, clipper::ODP_REACT), \
             MESH("opc", "Overdrive protection chart", 2, clipper::CURVE_MESH_POINTS), \
             SWITCH("ce", "Clipper enable", 1.0f), \
             COMBO("cf", "Clipper sigmoid function", 2.0f, sigmoid_functions), \

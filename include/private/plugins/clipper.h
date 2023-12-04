@@ -72,7 +72,7 @@ namespace lsp
                     plug::IPort        *pOn;                // Enable overdrive protection
                     plug::IPort        *pThreshold;         // Threshold
                     plug::IPort        *pKnee;              // Knee
-                    plug::IPort        *pResonance;         // Resonance frequency
+                    plug::IPort        *pReactivity;        // Reactivity
                     plug::IPort        *pCurveMesh;         // Curve chart mesh
                 } odp_params_t;
 
@@ -161,6 +161,7 @@ namespace lsp
                 size_t              nChannels;          // Number of channels
                 channel_t          *vChannels;          // Delay channels
 
+                dspu::LoudnessMeter sInMeter;           // Input LUFS meter
                 dspu::LoudnessMeter sOutMeter;          // Output LUFS meter
                 compressor_t        sComp;              // Simple compressor
                 odp_params_t        sOdp;               // Overdrive protection params
@@ -169,6 +170,7 @@ namespace lsp
 
                 float               fInGain;            // Input gain
                 float               fOutGain;           // Output gain
+                float               fInLufs;            // Output LUFS
                 float               fOutLufs;           // Output LUFS
                 float               fThresh;            // Threshold
                 float               fStereoLink;        // Stereo link
@@ -184,6 +186,7 @@ namespace lsp
                 plug::IPort        *pBypass;            // Bypass
                 plug::IPort        *pGainIn;            // Input gain
                 plug::IPort        *pGainOut;           // Output gain
+                plug::IPort        *pLufsIn;            // Input LUFS meter
                 plug::IPort        *pLufsOut;           // Output LUFS meter
                 plug::IPort        *pThresh;            // Threshold
                 plug::IPort        *pBoosting;          // Boosting mode
