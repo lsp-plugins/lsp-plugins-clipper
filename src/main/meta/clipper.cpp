@@ -180,8 +180,8 @@ namespace lsp
 
         const plugin_t clipper_stereo =
         {
-            "Pluginschablone Stereo",
-            "Plugin Template Stereo",
+            "Clipper Stereo",
+            "Clipper Stereo",
             "CL1S",
             &developers::v_sadovnikov,
             "clipper_stereo",

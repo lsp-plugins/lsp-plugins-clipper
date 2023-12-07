@@ -54,8 +54,7 @@
 
 							<!-- Meshes -->
 							<mesh id="opc" width="3" color=":op ? 'green' : 'graph_prim'" smooth="true"/>
-							<dot x.id="odx_l" y.id="ody_l" color="left" bcolor="left" visibility=":op"/>
-							<dot x.id="odx_r" y.id="ody_r" color="right" bcolor="right" visibility=":op"/>
+							<dot x.id="odx" y.id="ody" color="green" bcolor="green" visibility=":op"/>
 
 							<!-- Markers -->
 							<marker
@@ -130,18 +129,7 @@
 					<label text="labels.odp" padding="4"/>
 					<ledmeter vexpand="true" angle="1">
 						<ledchannel
-							id="odr_l"
-							min="-12 db"
-							max="0 db"
-							log="true"
-							balance="0 db"
-							balance.visibility="true"
-							type="peak"
-							value.color=":op ? 'dark_green' : 'cycle_inactive'"
-							yellow.color=":op ? 'meter_yellow' : 'cycle_inactive'"
-							balance.color=":op ? 'green' : 'cycle_inactive'"/>
-						<ledchannel
-							id="odr_r"
+							id="odr"
 							min="-12 db"
 							max="0 db"
 							log="true"
@@ -226,8 +214,7 @@
 
 							<!-- Meshes -->
 							<mesh id="cfc" x.index="0" y.index="1" width="3" color=":ce ? 'graph_mesh': 'graph_prim'" smooth="true"/>
-							<dot x.id="cfx_l" y.id="cfy_l" color="left" bcolor="left" visibility=":ce"/>
-							<dot x.id="cfx_r" y.id="cfy_r" color="right" bcolor="right" visibility=":ce"/>
+							<dot x.id="cfx" y.id="cfy" color="dot" bcolor="dot" visibility=":ce"/>
 
 							<!-- Markers -->
 							<marker
@@ -316,8 +303,7 @@
 
 							<!-- Meshes -->
 							<mesh id="cfc" x.index="2" y.index="3" width="3" color=":ce ? 'graph_mesh': 'graph_prim'" smooth="true"/>
-							<dot x.id="cfx_l" y.id="cfy_l" color="left" bcolor="left" visibility=":ce"/>
-							<dot x.id="cfx_r" y.id="cfy_r" color="right" bcolor="right" visibility=":ce"/>
+							<dot x.id="cfx" y.id="cfy" color="dot" bcolor="dot" visibility=":ce"/>
 
 							<!-- Markers -->
 							<marker
@@ -393,18 +379,7 @@
 					<label text="labels.clp" padding="4"/>
 					<ledmeter vexpand="true" angle="1">
 						<ledchannel
-							id="cfr_l"
-							min="-12 db"
-							max="12 db"
-							log="true"
-							balance="0 db"
-							balance.visibility="true"
-							type="peak"
-							value.color=":ce ? 'blue' : 'cycle_inactive'"
-							yellow.color=":ce ? 'meter_yellow' : 'cycle_inactive'"
-							balance.color=":ce ? 'balance' : 'cycle_inactive'"/>
-						<ledchannel
-							id="cfr_r"
+							id="cfr"
 							min="-12 db"
 							max="12 db"
 							log="true"
@@ -461,12 +436,6 @@
 							<label text="labels.reactivity" halign="0"/>
 							<value id="or" sline="true" halign="0"/>
 						</vbox>
-
-						<knob id="slink" scolor="kscale"/>
-						<vbox vfill="false" pad.l="4" pad.r="10" width="50">
-							<label text="labels.stereo_link" halign="0"/>
-							<value id="slink" sline="true" halign="0"/>
-						</vbox>
 					</hbox>
 				</cell>
 				<cell rows="5">
@@ -497,24 +466,21 @@
 				</cell>
 
 				<!-- row 3 -->
-				<grid rows="2" cols="2">
-					<cell cols="2"><label text="labels.gain_" padding="4"/></cell>
-					<button id="grg_l" size="10" ui:inject="Button_blue" led="true"/>
-					<button id="grg_r" size="10" ui:inject="Button_blue" led="true"/>
-				</grid>
-				<grid rows="2" cols="2">
-					<cell cols="2"><label text="labels.chan.in" padding="4"/></cell>
-					<button id="ilg_l" size="10" ui:inject="Button_left" led="true"/>
-					<button id="ilg_r" size="10" ui:inject="Button_right" led="true"/>
-				</grid>
+				<vbox>
+					<label text="labels.gain_" padding="4"/>
+					<button id="grg" height="10" width="22" ui:inject="Button_blue" led="true"/>
+				</vbox>
+				<vbox>
+					<label text="labels.chan.in" padding="4"/>
+					<button id="ilg" height="10" width="22" ui:inject="Button_mono" led="true"/>
+				</vbox>
 				<cell rows="3">
 					<vsep pad.h="2" bg.color="bg" hreduce="true"/>
 				</cell>
-				<grid rows="2" cols="2">
-					<cell cols="2"><label text="labels.chan.out" padding="4"/></cell>
-					<button id="olg_l" size="10" ui:inject="Button_left" led="true"/>
-					<button id="olg_r" size="10" ui:inject="Button_right" led="true"/>
-				</grid>
+				<vbox>
+					<label text="labels.chan.out" padding="4"/>
+					<button id="olg" height="10" width="22" ui:inject="Button_mono" led="true"/>
+				</vbox>
 				<label text="labels.chan.in" padding="4"/>
 				<cell rows="3">
 					<vsep pad.h="2" bg.color="bg" hreduce="true"/>
@@ -558,12 +524,9 @@
 						</ui:with>
 
 						<!-- Meshes -->
-						<mesh id="ctg_l" width="0" x.index="0" y.index="1" color="left_in" fcolor="left_in" fcolor.a="0.8" fill="true" visibility=":ilg_l"/>
-						<mesh id="ctg_r" width="0" x.index="0" y.index="1" color="right_in" fcolor="right_in" fcolor.a="0.8" fill="true" visibility=":ilg_r"/>
-						<mesh id="ctg_l" width="2" x.index="0" y.index="2" color="left" visibility=":olg_l"/>
-						<mesh id="ctg_r" width="2" x.index="0" y.index="2" color="right" visibility=":olg_r"/>
-						<mesh id="ctg_l" width="2" x.index="0" y.index="3" color="bright_blue" visibility=":grg_l"/>
-						<mesh id="ctg_r" width="2" x.index="0" y.index="3" color="bright_blue" visibility=":grg_r"/>
+						<mesh id="ctg" width="0" x.index="0" y.index="1" color="mono_in" fcolor="mono_in" fcolor.a="0.8" fill="true" visibility=":ilg"/>
+						<mesh id="ctg" width="2" x.index="0" y.index="2" color="mono" visibility=":olg"/>
+						<mesh id="ctg" width="2" x.index="0" y.index="3" color="bright_blue" visibility=":grg"/>
 
 						<!-- Boundaries -->
 						<marker v="24 db" ox="1" oy="0" color="graph_prim" visibility="false"/>
@@ -596,18 +559,15 @@
 
 					<!-- Band gain reduction meter -->
 					<ledmeter vexpand="true" vfill="true" angle="1">
-						<ledchannel id="grm_l" min="-24 db" max="12 db" log="true" balance="0 db" balance.visibility="true" type="peak" activity=":grg_l" value.color="blue" yellow.color="meter_yellow" balance.color="balance"/>
-						<ledchannel id="grm_r" min="-24 db" max="12 db" log="true" balance="0 db" balance.visibility="true" type="peak" activity=":grg_r" value.color="blue" yellow.color="meter_yellow" balance.color="balance"/>
+						<ledchannel id="grm" min="-24 db" max="12 db" log="true" balance="0 db" balance.visibility="true" type="peak" activity=":grg" value.color="blue" yellow.color="meter_yellow" balance.color="balance"/>
 					</ledmeter>
 					<!-- Band input level -->
 					<ledmeter vexpand="true" vfill="true" angle="1">
-						<ledchannel id="ilm_l" min="-60 db" max="12 db" log="true" type="rms_peak" peak.visibility="true" activity=":ilg_l" value.color="left_in" red.color="red" yellow.color="meter_yellow" balance.color="balance"/>
-						<ledchannel id="ilm_r" min="-60 db" max="12 db" log="true" type="rms_peak" peak.visibility="true" activity=":ilg_r" value.color="right_in" red.color="red" yellow.color="meter_yellow" balance.color="balance"/>
+						<ledchannel id="ilm" min="-60 db" max="12 db" log="true" type="rms_peak" peak.visibility="true" activity=":ilg" value.color="mono_in" red.color="red" yellow.color="meter_yellow" balance.color="balance"/>
 					</ledmeter>
 					<!-- Band output level -->
 					<ledmeter vexpand="true" vfill="true" angle="1">
-						<ledchannel id="olm_l" min="-60 db" max="12 db" log="true" type="rms_peak" peak.visibility="true" activity=":olg_l" value.color="left" red.color="red" yellow.color="meter_yellow" balance.color="balance"/>
-						<ledchannel id="olm_r" min="-60 db" max="12 db" log="true" type="rms_peak" peak.visibility="true" activity=":olg_r" value.color="right" red.color="red" yellow.color="meter_yellow" balance.color="balance"/>
+						<ledchannel id="olm" min="-60 db" max="12 db" log="true" type="rms_peak" peak.visibility="true" activity=":olg" value.color="mono" red.color="red" yellow.color="meter_yellow" balance.color="balance"/>
 					</ledmeter>
 
 					<!-- LUFS input meter -->

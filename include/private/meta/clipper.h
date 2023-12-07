@@ -51,7 +51,7 @@ namespace lsp
             static constexpr float  THRESHOLD_MIN           = -48.0f;
             static constexpr float  THRESHOLD_MAX           = 0.0f;
             static constexpr float  THRESHOLD_DFL           = 0.0f;
-            static constexpr float  THRESHOLD_STEP          = 0.05f;
+            static constexpr float  THRESHOLD_STEP          = 0.01f;
 
             static constexpr float  HPF_FREQ_MIN            = 10.0f;
             static constexpr float  HPF_FREQ_MAX            = 60.0f;
@@ -61,7 +61,7 @@ namespace lsp
             static constexpr float  STEREO_LINK_MIN         = 0.0f;
             static constexpr float  STEREO_LINK_MAX         = 100.0f;
             static constexpr float  STEREO_LINK_DFL         = 50.0f;
-            static constexpr float  STEREO_LINK_STEP        = 0.05f;
+            static constexpr float  STEREO_LINK_STEP        = 0.01f;
 
             static constexpr float  MAKEUP_MIN              = -24.0f;
             static constexpr float  MAKEUP_MAX              = 24.0f;
@@ -76,37 +76,37 @@ namespace lsp
             static constexpr float  LUFS_THRESH_MIN         = -36.0f;
             static constexpr float  LUFS_THRESH_MAX         = 0.0f;
             static constexpr float  LUFS_THRESH_DFL         = -3.0f;
-            static constexpr float  LUFS_THRESH_STEP        = 0.05f;
+            static constexpr float  LUFS_THRESH_STEP        = 0.01f;
 
             static constexpr float  ODP_LINK_MIN            = GAIN_AMP_M_INF_DB;
             static constexpr float  ODP_LINK_MAX            = GAIN_AMP_0_DB;
             static constexpr float  ODP_LINK_DFL            = GAIN_AMP_M_6_DB;
-            static constexpr float  ODP_LINK_STEP           = 0.05f;
+            static constexpr float  ODP_LINK_STEP           = 0.01f;
 
             static constexpr float  ODP_KNEE_MIN            = 0.0f;
             static constexpr float  ODP_KNEE_MAX            = 6.0f;
             static constexpr float  ODP_KNEE_DFL            = 1.5f;
-            static constexpr float  ODP_KNEE_STEP           = 0.005f;
+            static constexpr float  ODP_KNEE_STEP           = 0.001f;
 
             static constexpr float  ODP_THRESHOLD_MIN       = -12.0f;
             static constexpr float  ODP_THRESHOLD_MAX       = 0.0f;
             static constexpr float  ODP_THRESHOLD_DFL       = -1.5f;
-            static constexpr float  ODP_THRESHOLD_STEP      = 0.01f;
+            static constexpr float  ODP_THRESHOLD_STEP      = 0.001f;
 
             static constexpr float  ODP_REACT_MIN           = 1.0f;
             static constexpr float  ODP_REACT_MAX           = 200.0f;
             static constexpr float  ODP_REACT_DFL           = 50.0f;
-            static constexpr float  ODP_REACT_STEP          = 0.005f;
+            static constexpr float  ODP_REACT_STEP          = 0.0005f;
 
             static constexpr float  CLIP_THRESHOLD_MIN      = GAIN_AMP_M_INF_DB;
             static constexpr float  CLIP_THRESHOLD_MAX      = GAIN_AMP_0_DB;
             static constexpr float  CLIP_THRESHOLD_DFL      = GAIN_AMP_M_3_DB;
-            static constexpr float  CLIP_THRESHOLD_STEP     = 0.025f;
+            static constexpr float  CLIP_THRESHOLD_STEP     = 0.005f;
 
             static constexpr float  CLIP_PUMPING_MIN        = -12.0f;
             static constexpr float  CLIP_PUMPING_MAX        = 12.0f;
             static constexpr float  CLIP_PUMPING_DFL        = 0.0f;
-            static constexpr float  CLIP_PUMPING_STEP       = 0.025f;
+            static constexpr float  CLIP_PUMPING_STEP       = 0.005f;
 
             enum dithering_t
             {
