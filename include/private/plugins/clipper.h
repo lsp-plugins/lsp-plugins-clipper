@@ -56,6 +56,13 @@ namespace lsp
                     CF_SYNC_ALL         = CF_SYNC_ODP | CF_SYNC_CLIP
                 };
 
+                enum channel_flags_t
+                {
+                    CH_IN_GRAPH         = 1 << 0,           // Input graph visibility
+                    CH_OUT_GRAPH        = 1 << 1,           // Output graph visibility
+                    CH_RED_GRAPH        = 1 << 2            // Gain graph visibility
+                };
+
                 typedef struct compressor_t
                 {
                     float       x0, x1, x2;
@@ -115,6 +122,9 @@ namespace lsp
                     dspu::MeterGraph    sInGraph;           // Input meter graph
                     dspu::MeterGraph    sOutGraph;          // Output meter graph
 
+                    // Channel flags
+                    uint32_t            nFlags;             // Channel flags
+
                     // Meter values
                     float               fIn;                // Input level meter
                     float               fOut;               // Output level meter
@@ -139,6 +149,10 @@ namespace lsp
                     plug::IPort        *pDataOut;           // Output port
 
                     // Metering
+                    plug::IPort        *pInVisible;         // Input visibility
+                    plug::IPort        *pOutVisible;        // Output visibility
+                    plug::IPort        *pRedVisible;        // Reduction visibility
+
                     plug::IPort        *pIn;                // Input level meter
                     plug::IPort        *pOut;               // Output level meter
                     plug::IPort        *pRed;               // Reduction level meter

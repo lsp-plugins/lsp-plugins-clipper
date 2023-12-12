@@ -25,6 +25,7 @@
 #include <lsp-plug.in/dsp-units/units.h>
 #include <lsp-plug.in/plug-fw/meta/func.h>
 #include <lsp-plug.in/shared/debug.h>
+#include <lsp-plug.in/shared/id_colors.h>
 
 #include <private/plugins/clipper.h>
 
@@ -281,6 +282,8 @@ namespace lsp
 
                 c->sDither.init();
 
+                c->nFlags               = 0;
+
                 c->fIn                  = GAIN_AMP_M_INF_DB;
                 c->fOut                 = GAIN_AMP_M_INF_DB;
                 c->fRed                 = GAIN_AMP_M_INF_DB;
@@ -301,6 +304,10 @@ namespace lsp
                 // Initialize ports
                 c->pDataIn              = NULL;
                 c->pDataOut             = NULL;
+
+                c->pInVisible           = NULL;
+                c->pOutVisible          = NULL;
+                c->pRedVisible          = NULL;
 
                 c->pIn                  = NULL;
                 c->pOut                 = NULL;
@@ -364,9 +371,11 @@ namespace lsp
             lsp_trace("Skipping graph visibility ports");
             for (size_t i=0; i<nChannels; ++i)
             {
-                trace_port(ports[port_id++]); // Skip input level graph visibility
-                trace_port(ports[port_id++]); // Skip output level graph visibility
-                trace_port(ports[port_id++]); // Skip gain reduction graph visibility
+                channel_t *c            = &vChannels[i];
+
+                c->pInVisible           = trace_port(ports[port_id++]);
+                c->pOutVisible          = trace_port(ports[port_id++]);
+                c->pRedVisible          = trace_port(ports[port_id++]);
             }
 
             // Bind channel metering
@@ -610,6 +619,11 @@ namespace lsp
             for (size_t i=0; i<nChannels; ++i)
             {
                 channel_t *c            = &vChannels[i];
+
+                // Manage flags
+                c->nFlags               = lsp_setflag(c->nFlags, CH_IN_GRAPH, c->pInVisible->value() >= 0.5f);
+                c->nFlags               = lsp_setflag(c->nFlags, CH_OUT_GRAPH, c->pOutVisible->value() >= 0.5f);
+                c->nFlags               = lsp_setflag(c->nFlags, CH_RED_GRAPH, c->pRedVisible->value() >= 0.5f);
 
                 // Update sidechain reactivity
                 c->sSc.set_reactivity(reactivity);
@@ -964,9 +978,12 @@ namespace lsp
             pLufsIn->set_value(dspu::gain_to_lufs(fInLufs));
             pLufsOut->set_value(dspu::gain_to_lufs(fOutLufs));
 
+            uint32_t flags = 0;
+
             for (size_t i=0; i<nChannels; ++i)
             {
                 channel_t *c    = &vChannels[i];
+                flags          |= (c->nFlags & (CH_IN_GRAPH | CH_OUT_GRAPH | CH_RED_GRAPH));
 
                 c->pIn->set_value(c->fIn / fThresh);
                 c->pOut->set_value(c->fOut);
@@ -980,6 +997,9 @@ namespace lsp
                 c->pClipOut->set_value(c->fClipOut);
                 c->pClipRed->set_value(c->fClipRed);
             }
+
+            if (flags != 0)
+                pWrapper->query_display_draw();
         }
 
         void clipper::output_mesh_curves(size_t samples)
@@ -1096,7 +1116,175 @@ namespace lsp
 
         bool clipper::inline_display(plug::ICanvas *cv, size_t width, size_t height)
         {
-            return false;
+            // Check proportions
+            if (height > (M_RGOLD_RATIO * width))
+                height  = M_RGOLD_RATIO * width;
+
+            // Init canvas
+            if (!cv->init(width, height))
+                return false;
+            width   = cv->width();
+            height  = cv->height();
+
+            // Clear background
+            bool bypassing = vChannels[0].sBypass.bypassing();
+            cv->set_color_rgb((bypassing) ? CV_DISABLED : CV_BACKGROUND);
+            cv->paint();
+
+            // Calc axis params
+            float zy    = 1.0f/GAIN_AMP_M_24_DB;
+            float dx    = -float(width/meta::clipper::TIME_HISTORY_MAX);
+            float dy    = height/(logf(GAIN_AMP_M_24_DB)-logf(GAIN_AMP_P_12_DB));
+
+            // Draw axis
+            cv->set_line_width(1.0);
+
+            // Draw vertical lines
+            cv->set_color_rgb(CV_YELLOW, 0.5f);
+            for (float i=1.0; i < (meta::clipper::TIME_HISTORY_MAX - 0.1f); i += 1.0f)
+            {
+                float ax = width + dx*i;
+                cv->line(ax, 0, ax, height);
+            }
+
+            // Draw horizontal lines
+            cv->set_color_rgb(CV_WHITE, 0.5f);
+            for (float i=GAIN_AMP_M_18_DB; i<GAIN_AMP_P_12_DB; i *= GAIN_AMP_P_6_DB)
+            {
+                float ay = height + dy*(logf(i*zy));
+                cv->line(0, ay, width, ay);
+            }
+
+            // Allocate buffer: t, x, y, in[0], out[0], gain[0], in[1], out[1], gain[1]
+            const size_t count  = width + 4;
+            pIDisplay           = core::IDBuffer::reuse(pIDisplay, 3 + nChannels * 3, count);
+            core::IDBuffer *b   = pIDisplay;
+            if (b == NULL)
+                return false;
+
+            static const uint32_t c_colors[] = {
+                CV_MIDDLE_CHANNEL_IN, CV_MIDDLE_CHANNEL, CV_BRIGHT_BLUE,
+                CV_LEFT_CHANNEL_IN, CV_RIGHT_CHANNEL_IN,
+                CV_LEFT_CHANNEL, CV_RIGHT_CHANNEL,
+                CV_BRIGHT_BLUE, CV_BRIGHT_BLUE
+            };
+
+            const uint32_t *col = (nChannels > 1) ? &c_colors[3] : c_colors;
+            float r             = meta::clipper::TIME_MESH_POINTS/float(width);
+
+            // Fill time array
+            float *t            = &b->v[0][2];
+            for (size_t j=0; j<width; ++j)
+            {
+                size_t k        = r*j;
+                t[j]            = vTime[k];
+            }
+            t[-2]           = t[0] + meta::clipper::TIME_HISTORY_GAP;
+            t[-1]           = t[-2];
+            t              += width;
+            t[0]            = t[-1] - meta::clipper::TIME_HISTORY_GAP;
+            t[1]            = t[0];
+
+            cv->set_line_width(2.0f);
+
+            // Step 1: Fill meshes
+            for (size_t i=0; i<nChannels; ++i)
+            {
+                channel_t *c    = &vChannels[i];
+
+                // Initialize values
+                const float *in_g   = c->sInGraph.data();
+                const float *out_g  = c->sOutGraph.data();
+                float *in           = &b->v[3 + i*3 + 0][2];
+                float *out          = &b->v[3 + i*3 + 1][2];
+                float *red          = &b->v[3 + i*3 + 2][2];
+
+                for (size_t k=0; k<width; ++k)
+                {
+                    size_t off      = size_t(r*k);
+                    in[k]           = in_g[off];
+                    out[k]          = out_g[off];
+                    red[k]          = lsp_max(out[k], GAIN_AMP_M_120_DB) / lsp_max(in[k], GAIN_AMP_M_120_DB);
+                }
+
+                // Add terminating points
+                in[-2]          = 0.0f;
+                in[-1]          = in[0];
+                out[-2]         = out[0];
+                out[-1]         = out[0];
+                red[-2]         = red[0];
+                red[-1]         = red[0];
+
+                in             += width;
+                out            += width;
+                red            += width;
+
+                in[0]           = in[-1];
+                in[1]           = 0.0f;
+                out[0]          = out[-1];
+                out[1]          = out[-1];
+                red[0]          = red[-1];
+                red[1]          = red[-1];
+            }
+
+            // Step 2: Draw input meshes
+            for (size_t i=0; i<nChannels; ++i, ++col)
+            {
+                channel_t *c    = &vChannels[i];
+                if (!(c->nFlags & CH_IN_GRAPH))
+                    continue;
+
+                // Initialize coords
+                dsp::fill(b->v[1], width, count);  // x = width
+                dsp::fill(b->v[2], height, count); // y = height
+                dsp::fmadd_k3(b->v[1], b->v[0], dx, count); // x[i] = width - dx * t[i]
+                dsp::axis_apply_log1(b->v[2], b->v[3 + i*3 + 0], zy, dy, count);
+
+                // Draw channel
+                uint32_t color = (bypassing) ? CV_SILVER : *col;
+                Color stroke(color), fill(color, 0.5f);
+                cv->draw_poly(b->v[1], b->v[2], count, stroke, fill);
+            }
+
+            // Step 2: Draw output meshes
+            for (size_t i=0; i<nChannels; ++i, ++col)
+            {
+                channel_t *c    = &vChannels[i];
+                if (!(c->nFlags & CH_OUT_GRAPH))
+                    continue;
+
+                // Initialize coords
+                dsp::fill(b->v[1], width, count);  // x = width
+                dsp::fill(b->v[2], height, count); // y = height
+                dsp::fmadd_k3(b->v[1], b->v[0], dx, count); // x[i] = width - dx * t[i]
+                dsp::axis_apply_log1(b->v[2], b->v[3 + i*3 + 1], zy, dy, count);
+
+                // Draw channel
+                uint32_t color = (bypassing) ? CV_SILVER : *col;
+                cv->set_color_rgb(color);
+                cv->draw_lines(b->v[1], b->v[2], width);
+            }
+
+            // Step 2: Draw gain
+            for (size_t i=0; i<nChannels; ++i, ++col)
+            {
+                channel_t *c    = &vChannels[i];
+                if (!(c->nFlags & CH_RED_GRAPH))
+                    continue;
+
+                // Initialize coords
+                dsp::fill(b->v[1], width, count);  // x = width
+                dsp::fill(b->v[2], height, count); // y = height
+                dsp::fmadd_k3(b->v[1], b->v[0], dx, count); // x[i] = width - dx * t[i]
+                dsp::axis_apply_log1(b->v[2], b->v[3 + i*3 + 2], zy, dy, count);
+
+                // Draw channel
+                uint32_t color = (bypassing) ? CV_SILVER : *col;
+                cv->set_color_rgb(color);
+                cv->draw_lines(b->v[1], b->v[2], width);
+            }
+
+            return true;
         }
 
         void clipper::dump(dspu::IStateDumper *v) const
