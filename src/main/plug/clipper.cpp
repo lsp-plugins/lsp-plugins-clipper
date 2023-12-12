@@ -1290,6 +1290,163 @@ namespace lsp
         void clipper::dump(dspu::IStateDumper *v) const
         {
             plug::Module::dump(v);
+
+            v->write("nChannels", nChannels);
+
+            v->begin_array("vChannels", vChannels, 2);
+            {
+                for (size_t i=0; i<nChannels; ++i)
+                {
+                    const channel_t *c = &vChannels[i];
+
+                    v->begin_object(c, sizeof(channel_t));
+                    {
+                        v->write_object("sBypass", &c->sBypass);
+                        v->write_object("sDryDelay", &c->sDryDelay);
+                        v->write_object("sScDelay", &c->sScDelay);
+                        v->write_object("sSc", &c->sSc);
+                        v->write_object("sDither", &c->sDither);
+                        v->write_object("sInGraph", &c->sInGraph);
+                        v->write_object("sOutGraph", &c->sOutGraph);
+
+                        v->write("nFlags", c->nFlags);
+
+                        v->write("fIn", c->fIn);
+                        v->write("fOut", c->fOut);
+                        v->write("fRed", c->fRed);
+
+                        v->write("fOdpIn", c->fOdpIn);
+                        v->write("fOdpOut", c->fOdpOut);
+                        v->write("fOdpRed", c->fOdpRed);
+
+                        v->write("fClipIn", c->fClipIn);
+                        v->write("fClipOut", c->fClipOut);
+                        v->write("fClipRed", c->fClipRed);
+
+                        v->write("vIn", c->vIn);
+                        v->write("vOut", c->vOut);
+                        v->write("vData", c->vData);
+                        v->write("vSc", c->vSc);
+
+                        v->write("pDataIn", c->pDataIn);
+                        v->write("pDataOut", c->pDataOut);
+
+                        v->write("pInVisible", c->pInVisible);
+                        v->write("pOutVisible", c->pOutVisible);
+                        v->write("pRedVisible", c->pRedVisible);
+
+                        v->write("pIn", c->pIn);
+                        v->write("pOut", c->pOut);
+                        v->write("pRed", c->pRed);
+
+                        v->write("pOdpIn", c->pOdpIn);
+                        v->write("pOdpOut", c->pOdpOut);
+                        v->write("pOdpRed", c->pOdpRed);
+
+                        v->write("pClipIn", c->pClipIn);
+                        v->write("pClipOut", c->pClipOut);
+                        v->write("pClipRed", c->pClipRed);
+
+                        v->write("pTimeMesh", c->pTimeMesh);
+                    }
+                    v->end_object();
+                }
+            }
+            v->end_array();
+
+            v->write_object("sInMeter", &sInMeter);
+            v->write_object("sOutMeter", &sOutMeter);
+
+            v->begin_object("sComp", &sComp, sizeof(compressor_t));
+            {
+                const compressor_t *c = &sComp;
+
+                v->write("x0", c->x0);
+                v->write("x1", c->x1);
+                v->write("x2", c->x2);
+                v->write("t", c->t);
+                v->write("a", c->a);
+                v->write("b", c->b);
+                v->write("c", c->c);
+            }
+            v->end_object();
+
+            v->begin_object("sOdp", &sOdp, sizeof(odp_params_t));
+            {
+                const odp_params_t *o = &sOdp;
+
+                v->write("fThreshold", o->fThreshold);
+                v->write("fKnee", o->fKnee);
+
+                v->write("pOn", o->pOn);
+                v->write("pThreshold", o->pThreshold);
+                v->write("pKnee", o->pKnee);
+                v->write("pReactivity", o->pReactivity);
+                v->write("pCurveMesh", o->pCurveMesh);
+            }
+            v->end_object();
+
+            v->begin_object("sClip", &sClip, sizeof(clip_params_t));
+            {
+                const clip_params_t *c = &sClip;
+
+                v->write("pFunc", c->pFunc);
+                v->write("fThreshold", c->fThreshold);
+                v->write("fPumping", c->fPumping);
+                v->write("fScaling", c->fScaling);
+                v->write("fKnee", c->fKnee);
+
+                v->write("pOn", c->pOn);
+                v->write("pFunction", c->pFunction);
+                v->write("pThreshold", c->pThreshold);
+                v->write("pPumping", c->pPumping);
+                v->write("pCurveMesh", c->pCurveMesh);
+            }
+            v->end_object();
+
+            v->begin_object("sLufs", &sLufs, sizeof(lufs_limiter_t));
+            {
+                const lufs_limiter_t *l = &sLufs;
+
+                v->write_object("sMeter", &l->sMeter);
+                v->write_object("sGain", &l->sGain);
+
+                v->write("fIn", l->fIn);
+                v->write("fRed", l->fRed);
+
+                v->write("pOn", l->pOn);
+                v->write("pIn", l->pIn);
+                v->write("pRed", l->pRed);
+                v->write("pThreshold", l->pThreshold);
+            }
+            v->end_object();
+
+            v->write("fInGain", fInGain);
+            v->write("fOutGain", fOutGain);
+            v->write("fInLufs", fInLufs);
+            v->write("fOutLufs", fOutLufs);
+            v->write("fThresh", fThresh);
+            v->write("fStereoLink", fStereoLink);
+            v->write("nFlags", nFlags);
+
+            v->write("vBuffer", vBuffer);
+            v->write("vOdp", vOdp);
+            v->write("vLinSigmoid", vLinSigmoid);
+            v->write("vLogSigmoid", vLogSigmoid);
+            v->write("vTime", vTime);
+            v->write("pIDisplay", pIDisplay);
+
+            v->write("pBypass", pBypass);
+            v->write("pGainIn", pGainIn);
+            v->write("pGainOut", pGainOut);
+            v->write("pLufsIn", pLufsIn);
+            v->write("pLufsOut", pLufsOut);
+            v->write("pThresh", pThresh);
+            v->write("pBoosting", pBoosting);
+            v->write("pStereoLink", pStereoLink);
+            v->write("pDithering", pDithering);
+
+            v->write("pData", pData);
         }
 
     } /* namespace plugins */
