@@ -158,6 +158,7 @@ namespace lsp
         {
             "Clipper Mono",
             "Clipper Mono",
+            "Clipper Mono",
             "CL1M",
             &developers::v_sadovnikov,
             "clipper_mono",
@@ -180,6 +181,7 @@ namespace lsp
 
         const plugin_t clipper_stereo =
         {
+            "Clipper Stereo",
             "Clipper Stereo",
             "Clipper Stereo",
             "CL1S",
