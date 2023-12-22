@@ -150,7 +150,7 @@ namespace lsp
             "clipper",
             "Clipper",
             B_DYNAMICS,
-            "", // TODO: provide ID of the video on YouTube
+            "jbnGSgoVIkg",
             "Peak clipping tool for maximization of output loudness"
         };
 
