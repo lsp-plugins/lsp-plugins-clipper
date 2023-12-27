@@ -598,7 +598,7 @@ namespace lsp
 
             // Enable/disable input loudness limiter
             nFlags                  = lsp_setflag(nFlags, CF_LUFS_LIMITER, sLufs.pOn->value() >= 0.5f);
-            sLufs.sGain.set_threshold(dspu::lufs_to_gain(sLufs.pThreshold->value()));
+            sLufs.sGain.set_threshold(dspu::db_to_gain(sLufs.pThreshold->value()));
 
             fStereoLink             = (pStereoLink != NULL) ? pStereoLink->value() * 0.01f : 1.0f;
             nFlags                  = lsp_setflag(nFlags, CF_ODP_ENABLED, sOdp.pOn->value() >= 0.5f);
