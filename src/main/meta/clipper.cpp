@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-plugins-clipper
  * Created on: 01 дек 2023 г.
@@ -165,6 +165,8 @@ namespace lsp
             LSP_LV2_URI("clipper_mono"),
             LSP_LV2UI_URI("clipper_mono"),
             "cl1m",
+            LSP_VST3_UID("cl1m    cl1m"),
+            LSP_VST3UI_UID("cl1m    cl1m"),
             LSP_LADSPA_CLIPPER_BASE + 0,
             LSP_LADSPA_URI("clipper_mono"),
             LSP_CLAP_URI("clipper_mono"),
@@ -190,6 +192,8 @@ namespace lsp
             LSP_LV2_URI("clipper_stereo"),
             LSP_LV2UI_URI("clipper_stereo"),
             "cl1s",
+            LSP_VST3_UID("cl1s    cl1s"),
+            LSP_VST3UI_UID("cl1s    cl1s"),
             LSP_LADSPA_CLIPPER_BASE + 1,
             LSP_LADSPA_URI("clipper_stereo"),
             LSP_CLAP_URI("clipper_stereo"),
