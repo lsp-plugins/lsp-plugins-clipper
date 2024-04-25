@@ -985,8 +985,10 @@ namespace lsp
                 channel_t *c    = &vChannels[i];
                 flags          |= (c->nFlags & (CH_IN_GRAPH | CH_OUT_GRAPH | CH_RED_GRAPH));
 
+                const float out = (nFlags & CF_BOOSTING) ? c->fOut : c->fOut / fThresh;
+
                 c->pIn->set_value(c->fIn / fThresh);
-                c->pOut->set_value(c->fOut);
+                c->pOut->set_value(out);
                 c->pRed->set_value(c->fRed);
 
                 c->pOdpIn->set_value(c->fOdpIn);
