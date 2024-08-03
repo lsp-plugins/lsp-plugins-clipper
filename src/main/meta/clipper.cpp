@@ -25,7 +25,7 @@
 
 #define LSP_PLUGINS_CLIPPER_VERSION_MAJOR       1
 #define LSP_PLUGINS_CLIPPER_VERSION_MINOR       0
-#define LSP_PLUGINS_CLIPPER_VERSION_MICRO       3
+#define LSP_PLUGINS_CLIPPER_VERSION_MICRO       4
 
 #define LSP_PLUGINS_CLIPPER_VERSION  \
     LSP_MODULE_VERSION( \
@@ -162,14 +162,17 @@ namespace lsp
             "CL1M",
             &developers::v_sadovnikov,
             "clipper_mono",
-            LSP_LV2_URI("clipper_mono"),
-            LSP_LV2UI_URI("clipper_mono"),
-            "cl1m",
-            LSP_VST3_UID("cl1m    cl1m"),
-            LSP_VST3UI_UID("cl1m    cl1m"),
-            LSP_LADSPA_CLIPPER_BASE + 0,
-            LSP_LADSPA_URI("clipper_mono"),
-            LSP_CLAP_URI("clipper_mono"),
+            {
+                LSP_LV2_URI("clipper_mono"),
+                LSP_LV2UI_URI("clipper_mono"),
+                "cl1m",
+                LSP_VST3_UID("cl1m    cl1m"),
+                LSP_VST3UI_UID("cl1m    cl1m"),
+                LSP_LADSPA_CLIPPER_BASE + 0,
+                LSP_LADSPA_URI("clipper_mono"),
+                LSP_CLAP_URI("clipper_mono"),
+                LSP_GST_UID("clipper_mono"),
+            },
             LSP_PLUGINS_CLIPPER_VERSION,
             plugin_classes,
             clap_features_mono,
@@ -189,14 +192,17 @@ namespace lsp
             "CL1S",
             &developers::v_sadovnikov,
             "clipper_stereo",
-            LSP_LV2_URI("clipper_stereo"),
-            LSP_LV2UI_URI("clipper_stereo"),
-            "cl1s",
-            LSP_VST3_UID("cl1s    cl1s"),
-            LSP_VST3UI_UID("cl1s    cl1s"),
-            LSP_LADSPA_CLIPPER_BASE + 1,
-            LSP_LADSPA_URI("clipper_stereo"),
-            LSP_CLAP_URI("clipper_stereo"),
+            {
+                LSP_LV2_URI("clipper_stereo"),
+                LSP_LV2UI_URI("clipper_stereo"),
+                "cl1s",
+                LSP_VST3_UID("cl1s    cl1s"),
+                LSP_VST3UI_UID("cl1s    cl1s"),
+                LSP_LADSPA_CLIPPER_BASE + 1,
+                LSP_LADSPA_URI("clipper_stereo"),
+                LSP_CLAP_URI("clipper_stereo"),
+                LSP_GST_UID("clipper_stereo"),
+            },
             LSP_PLUGINS_CLIPPER_VERSION,
             plugin_classes,
             clap_features_stereo,

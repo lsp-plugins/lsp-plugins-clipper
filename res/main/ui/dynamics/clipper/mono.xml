@@ -226,7 +226,7 @@
 								width="2"
 								editable="true"
 								pointer="hsize"
-								visibility=":ce"
+								visibility=":ce and :cf ine 0"
 								fill="0.5"
 								color.a="0.2"
 								hcolor.a="0.1"
@@ -247,7 +247,7 @@
 								width="2"
 								editable="true"
 								pointer="hsize"
-								visibility="!:ce"
+								visibility="!:ce or :cf ieq 0"
 								fill="0.5"
 								color.a="0.2"
 								hcolor.a="0.1"
@@ -276,8 +276,8 @@
 								<text x="2.0" text="2"/>
 								<text x="2.25" text="graph.axis.in" halign="-1"/>
 							</ui:with>
-							<text x=":ct" y="1.25" text="graph.values.x::f" text:value=":ct" text.eval="true" color=":ce ? 'threshold' : 'graph_prim'" halign="1" valign="-1"/>
-							<text x=":ct" y="-0.25" text="graph.values.x:db:f" text:value="20 * lg :ct" text.eval="true" color=":ce ? 'threshold' : 'graph_prim'" halign="1" valign="1"/>
+							<text x=":ct" y="1.25" text="graph.values.x::f" text:value=":ct" text.eval="true" color=":ce and :cf ine 0 ? 'threshold' : 'graph_prim'" halign="1" valign="-1"/>
+							<text x=":ct" y="-0.25" text="graph.values.x:db:f" text:value="20 * lg :ct" text.eval="true" color=":ce and :cf ine 0 ? 'threshold' : 'graph_prim'" halign="1" valign="1"/>
 						</graph>
 
 						<!-- Clipper function graph logarithmic -->
@@ -315,7 +315,7 @@
 								width="2"
 								editable="true"
 								pointer="hsize"
-								visibility=":ce"
+								visibility=":ce and :cf ine 0"
 								fill="0.5"
 								color.a="0.2"
 								hcolor.a="0.1"
@@ -334,7 +334,7 @@
 								width="2"
 								editable="true"
 								pointer="hsize"
-								visibility="!:ce"
+								visibility="!:ce or :cf ieq 0"
 								fill="0.5"
 								color.a="0.2"
 								hcolor.a="0.1"
@@ -372,8 +372,8 @@
 								<text x="-36 db" text="graph.axis.in" halign="1"/>
 							</ui:with>
 
-							<text x=":ct" y="12 db" text="graph.values.x::f" text:value=":ct" text.eval="true" color=":ce ? 'threshold' : 'graph_prim'" halign="(:ct lt -12 db) ? 1 : -1" valign="-1"/>
-							<text x=":ct" y="-36 db" text="graph.values.x:db:f" text:value="20 * lg :ct" text.eval="true" color=":ce ? 'threshold' : 'graph_prim'" halign="(:ct lt -12 db) ? 1 : -1" valign="1"/>
+							<text x=":ct" y="12 db" text="graph.values.x::f" text:value=":ct" text.eval="true" color=":ce and :cf ine 0 ? 'threshold' : 'graph_prim'" halign="(:ct lt -12 db) ? 1 : -1" valign="-1"/>
+							<text x=":ct" y="-36 db" text="graph.values.x:db:f" text:value="20 * lg :ct" text.eval="true" color=":ce and :cf ine 0 ? 'threshold' : 'graph_prim'" halign="(:ct lt -12 db) ? 1 : -1" valign="1"/>
 						</graph>
 					</vbox>
 				</group>
@@ -408,7 +408,7 @@
 				<void hexpand="true" hfill="true"/>
 				<!-- thres -->
 				<hbox fill="false" pad.l="6" pad.r="10">
-					<knob id="ct" scolor=":ce ? 'threshold' : 'cycle_inactive'"/>
+					<knob id="ct" scolor=":ce and :cf ine 0 ? 'threshold' : 'cycle_inactive'"/>
 					<vbox vfill="false" width="50" pad.l="4">
 						<label text="labels.thresh_old" halign="0"/>
 						<value id="ct" sline="true" halign="0"/>
