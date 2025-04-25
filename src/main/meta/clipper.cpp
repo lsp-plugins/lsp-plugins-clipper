@@ -90,6 +90,7 @@ namespace lsp
             MESH("opc", "Overdrive protection chart", 2, clipper::CURVE_MESH_POINTS), \
             SWITCH("ce", "Clipper enable", 1.0f), \
             COMBO("cf", "Clipper sigmoid function", 2.0f, sigmoid_functions), \
+            CONTROL("dcoff", "Clipper DC offset", U_NONE, clipper::DC_OFFSET), \
             LOG_CONTROL("ct", "Clipper sigmoid threshold", U_GAIN_AMP, clipper::CLIP_THRESHOLD), \
             CONTROL("cp", "Clipper sigmoid pumping", U_DB, clipper::CLIP_PUMPING), \
             MESH("cfc", "Clipper sigmoid function chart", 4, clipper::CURVE_MESH_POINTS)

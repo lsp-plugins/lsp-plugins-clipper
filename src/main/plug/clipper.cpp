@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-plugins-clipper
  * Created on: 01 дек 2023 г.
@@ -99,12 +99,14 @@ namespace lsp
 
             sClip.pFunc             = NULL;
             sClip.fThreshold        = 0.0f;
+            sClip.fDCOffset         = 0.0f;
             sClip.fPumping          = 1.0f;
             sClip.fScaling          = 0.0f;
             sClip.fKnee             = 0.0f;
 
             sClip.pOn               = NULL;
             sClip.pFunction         = NULL;
+            sClip.pDCOffset         = NULL;
             sClip.pThreshold        = NULL;
             sClip.pPumping          = NULL;
             sClip.pCurveMesh        = NULL;
@@ -363,6 +365,7 @@ namespace lsp
             sOdp.pCurveMesh         = trace_port(ports[port_id++]);
             sClip.pOn               = trace_port(ports[port_id++]);
             sClip.pFunction         = trace_port(ports[port_id++]);
+            sClip.pDCOffset         = trace_port(ports[port_id++]);
             sClip.pThreshold        = trace_port(ports[port_id++]);
             sClip.pPumping          = trace_port(ports[port_id++]);
             sClip.pCurveMesh        = trace_port(ports[port_id++]);
@@ -480,17 +483,20 @@ namespace lsp
         {
             dspu::sigmoid::function_t func = vSigmoidFunctions[size_t(params->pFunction->value())];
             const float threshold   = lsp_min(params->pThreshold->value(), 0.99f);
+            const float dc_offset   = params->pDCOffset->value();
             const float pumping     = dspu::db_to_gain(params->pPumping->value());
 
             if ((func == params->pFunc) &&
                 (threshold == params->fThreshold) &&
+                (dc_offset == params->fDCOffset) &&
                 (pumping == params->fPumping))
                 return false;
 
             params->pFunc           = func;
             params->fThreshold      = threshold;
+            params->fDCOffset       = dc_offset;
             params->fPumping        = pumping;
-            params->fKnee           = 1.0f - threshold;
+            params->fKnee           = GAIN_AMP_0_DB - threshold;
             params->fScaling        = 1.0f / params->fKnee;
 
             return true;
@@ -582,7 +588,7 @@ namespace lsp
         void clipper::clip_curve(float *dst, const float *x, const clip_params_t *p, size_t count)
         {
             for (size_t i=0; i<count; ++i)
-                dst[i]      = clip_curve(p, x[i]);
+                dst[i]          = clip_curve(p, x[i]);
         }
 
 
@@ -735,8 +741,9 @@ namespace lsp
                 // Measure signal at the input of the band
                 const size_t idx_in_l   = dsp::abs_max_index(l->vData, samples);
                 const size_t idx_in_r   = dsp::abs_max_index(r->vData, samples);
-                const float in_l        = fabsf(l->vData[idx_in_l]);
-                const float in_r        = fabsf(r->vData[idx_in_r]);
+                const float dc_offset   = (nFlags & CF_CLIP_ENABLED) ? sClip.fDCOffset : 0.0f;
+                const float in_l        = fabsf(l->vData[idx_in_l] + dc_offset);
+                const float in_r        = fabsf(r->vData[idx_in_r] + dc_offset);
                 l->sInGraph.process(l->vData, samples);
                 r->sInGraph.process(r->vData, samples);
 
@@ -786,7 +793,10 @@ namespace lsp
                 // Clipping
                 if (nFlags & CF_CLIP_ENABLED)
                 {
-                    // Mesure input
+                    dsp::add_k2(l->vData, dc_offset, samples);
+                    dsp::add_k2(r->vData, dc_offset, samples);
+
+                    // Measure input
                     const size_t clip_idx_l = dsp::abs_max_index(l->vData, samples);
                     const size_t clip_idx_r = dsp::abs_max_index(r->vData, samples);
                     const float clip_in_l   = fabsf(l->vData[clip_idx_l]);
@@ -809,6 +819,9 @@ namespace lsp
                     r->fClipIn              = lsp_max(r->fClipIn, clip_in_r);
                     r->fClipOut             = lsp_max(r->fClipOut, clip_out_r);
                     r->fClipRed             = lsp_min(r->fClipRed, clip_red_r);
+
+                    dsp::sub_k2(l->vData, sClip.fDCOffset, samples);
+                    dsp::sub_k2(r->vData, sClip.fDCOffset, samples);
                 }
                 else
                 {
@@ -1393,6 +1406,7 @@ namespace lsp
                 const clip_params_t *c = &sClip;
 
                 v->write("pFunc", c->pFunc);
+                v->write("fDCOffset", c->fThreshold);
                 v->write("fThreshold", c->fThreshold);
                 v->write("fPumping", c->fPumping);
                 v->write("fScaling", c->fScaling);
@@ -1400,6 +1414,7 @@ namespace lsp
 
                 v->write("pOn", c->pOn);
                 v->write("pFunction", c->pFunction);
+                v->write("pDCOffset", c->pDCOffset);
                 v->write("pThreshold", c->pThreshold);
                 v->write("pPumping", c->pPumping);
                 v->write("pCurveMesh", c->pCurveMesh);

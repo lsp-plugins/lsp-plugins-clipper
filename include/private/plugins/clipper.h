@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-plugins-clipper
  * Created on: 01 дек 2023 г.
@@ -86,6 +86,7 @@ namespace lsp
                 typedef struct clip_params_t
                 {
                     dspu::sigmoid::function_t   pFunc;      // Sigmoid function
+                    float               fDCOffset;          // DC offset
                     float               fThreshold;         // Threshold
                     float               fPumping;           // Pumping
                     float               fScaling;           // Sigmoid scaling
@@ -93,6 +94,7 @@ namespace lsp
 
                     plug::IPort        *pOn;                // Enable sigmoid function
                     plug::IPort        *pFunction;          // Sigmoid function
+                    plug::IPort        *pDCOffset;          // DC offset
                     plug::IPort        *pThreshold;         // Sigmoid threshold
                     plug::IPort        *pPumping;           // Sigmoid pumping
                     plug::IPort        *pCurveMesh;         // Curve chart mesh

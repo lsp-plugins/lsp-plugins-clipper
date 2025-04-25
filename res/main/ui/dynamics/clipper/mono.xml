@@ -423,6 +423,15 @@
 						<value id="cp" sline="true" halign="0"/>
 					</vbox>
 				</hbox>
+				
+				<!-- DC offset -->
+				<hbox fill="false" pad.l="6" pad.r="10">
+					<knob id="dcoff" scolor=":ce and :cf ine 0 ? 'kscale' : 'cycle_inactive'"/>
+					<vbox vfill="false" width="50" pad.l="4">
+						<label text="labels.dc_offset" halign="0"/>
+						<value id="dcoff" sline="true" halign="0"/>
+					</vbox>
+				</hbox>
 			</hbox>
 		</ui:with>
 		</vbox>
