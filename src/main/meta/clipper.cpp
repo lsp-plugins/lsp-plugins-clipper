@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-plugins-clipper
  * Created on: 01 дек 2023 г.
@@ -86,11 +86,11 @@ namespace lsp
             SWITCH("op", "Overdrive protection", 1.0f), \
             CONTROL("th", "Overdrive protection threshold", U_DB, clipper::ODP_THRESHOLD), \
             CONTROL("kn", "Overdrive protection knee", U_DB, clipper::ODP_KNEE), \
-            LOG_CONTROL("or", "Overdrive protection reactivity", U_MSEC, clipper::ODP_REACT), \
+            LOG_CONTROL("or", "Overdrive protection reactivity", "ODP react", U_MSEC, clipper::ODP_REACT), \
             MESH("opc", "Overdrive protection chart", 2, clipper::CURVE_MESH_POINTS), \
             SWITCH("ce", "Clipper enable", 1.0f), \
             COMBO("cf", "Clipper sigmoid function", 2.0f, sigmoid_functions), \
-            LOG_CONTROL("ct", "Clipper sigmoid threshold", U_GAIN_AMP, clipper::CLIP_THRESHOLD), \
+            LOG_CONTROL("ct", "Clipper sigmoid threshold", "Thresh", U_GAIN_AMP, clipper::CLIP_THRESHOLD), \
             CONTROL("cp", "Clipper sigmoid pumping", U_DB, clipper::CLIP_PUMPING), \
             MESH("cfc", "Clipper sigmoid function chart", 4, clipper::CURVE_MESH_POINTS)
 
