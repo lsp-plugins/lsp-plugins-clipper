@@ -73,23 +73,23 @@ namespace lsp
             BYPASS, \
             IN_GAIN, \
             OUT_GAIN, \
-            SWITCH("lufs_on", "Enable input LUFS limitation", 1.0f), \
+            SWITCH("lufs_on", "Enable input LUFS limitation", "Limit LUFS", 1.0f), \
             CONTROL("lufs_th", "Input LUFS limiter threshold", U_LUFS, clipper::LUFS_THRESH), \
             LUFS_METER("lufs_rl", "Reduction LUFS value", 24.0f), \
             METER_OUT_GAIN("lufs_gr", "Input LUFS gain reduction", GAIN_AMP_0_DB), \
             LUFS_METER("lufs_il", "Input LUFS value", 24.0f), \
             LUFS_METER("lufs_ol", "Output LUFS value", 24.0f), \
             CONTROL("thresh", "Clipping threshold", U_DB, clipper::THRESHOLD), \
-            SWITCH("boost", "Boosting mode", 1.0f), \
-            COMBO("dither", "Dithering mode", 0, clipper_dither_modes), \
-            SWITCH("clog", "Clipper logarithmic display", 1.0f), \
-            SWITCH("op", "Overdrive protection", 1.0f), \
+            SWITCH("boost", "Boosting mode", "Boost", 1.0f), \
+            COMBO("dither", "Dithering mode", "Dithering", 0, clipper_dither_modes), \
+            SWITCH("clog", "Clipper logarithmic display", "Log display", 1.0f), \
+            SWITCH("op", "Overdrive protection", "ODP", 1.0f), \
             CONTROL("th", "Overdrive protection threshold", U_DB, clipper::ODP_THRESHOLD), \
             CONTROL("kn", "Overdrive protection knee", U_DB, clipper::ODP_KNEE), \
             LOG_CONTROL("or", "Overdrive protection reactivity", "ODP react", U_MSEC, clipper::ODP_REACT), \
             MESH("opc", "Overdrive protection chart", 2, clipper::CURVE_MESH_POINTS), \
-            SWITCH("ce", "Clipper enable", 1.0f), \
-            COMBO("cf", "Clipper sigmoid function", 2.0f, sigmoid_functions), \
+            SWITCH("ce", "Clipper enable", "Clip on", 1.0f), \
+            COMBO("cf", "Clipper sigmoid function", "Function", 2.0f, sigmoid_functions), \
             LOG_CONTROL("ct", "Clipper sigmoid threshold", "Thresh", U_GAIN_AMP, clipper::CLIP_THRESHOLD), \
             CONTROL("cp", "Clipper sigmoid pumping", U_DB, clipper::CLIP_PUMPING), \
             MESH("cfc", "Clipper sigmoid function chart", 4, clipper::CURVE_MESH_POINTS)
@@ -110,10 +110,10 @@ namespace lsp
             METER_GAIN_DFL("cfr" id, "Clipping function reduction level meter" label, GAIN_AMP_P_72_DB, GAIN_AMP_0_DB), \
             MESH("ctg" id, "Clipper time graph" label, 4, clipper::TIME_MESH_POINTS + 4)
 
-        #define OSCILLOSCOPE_SWITCHES(id, label) \
-            SWITCH("ilg" id, "Input level graph enable" label, 1.0f), \
-            SWITCH("olg" id, "Output level graph enable" label, 1.0f), \
-            SWITCH("grg" id, "Gain reduction graph enable" label, 1.0f)
+        #define OSCILLOSCOPE_SWITCHES(id, label, alias) \
+            SWITCH("ilg" id, "Input level graph enable" label, "Show In" alias, 1.0f), \
+            SWITCH("olg" id, "Output level graph enable" label, "Show Out" alias, 1.0f), \
+            SWITCH("grg" id, "Gain reduction graph enable" label, "Show Gain" alias, 1.0f)
 
         //-------------------------------------------------------------------------
         // Plugin metadata
@@ -122,7 +122,7 @@ namespace lsp
         {
             PORTS_MONO_PLUGIN,
             CLIPPER_COMMON,
-            OSCILLOSCOPE_SWITCHES("", ""),
+            OSCILLOSCOPE_SWITCHES("", "", ""),
             CLIPPER_METERS("", ""),
 
             PORTS_END
@@ -133,8 +133,8 @@ namespace lsp
             // Input and output audio ports
             PORTS_STEREO_PLUGIN,
             CLIPPER_COMMON_STEREO,
-            OSCILLOSCOPE_SWITCHES("_l", " Left"),
-            OSCILLOSCOPE_SWITCHES("_r", " Right"),
+            OSCILLOSCOPE_SWITCHES("_l", " Left", " L"),
+            OSCILLOSCOPE_SWITCHES("_r", " Right", " R"),
             CLIPPER_METERS("_l", " Left"),
             CLIPPER_METERS("_r", " Right"),
 
