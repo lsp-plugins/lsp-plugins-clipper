@@ -74,29 +74,29 @@ namespace lsp
             IN_GAIN, \
             OUT_GAIN, \
             SWITCH("lufs_on", "Enable input LUFS limitation", "Limit LUFS", 1.0f), \
-            CONTROL("lufs_th", "Input LUFS limiter threshold", U_LUFS, clipper::LUFS_THRESH), \
+            CONTROL("lufs_th", "Input LUFS limiter threshold", "LUFS thresh", U_LUFS, clipper::LUFS_THRESH), \
             LUFS_METER("lufs_rl", "Reduction LUFS value", 24.0f), \
             METER_OUT_GAIN("lufs_gr", "Input LUFS gain reduction", GAIN_AMP_0_DB), \
             LUFS_METER("lufs_il", "Input LUFS value", 24.0f), \
             LUFS_METER("lufs_ol", "Output LUFS value", 24.0f), \
-            CONTROL("thresh", "Clipping threshold", U_DB, clipper::THRESHOLD), \
+            CONTROL("thresh", "Clipping threshold", "Clip thresh", U_DB, clipper::THRESHOLD), \
             SWITCH("boost", "Boosting mode", "Boost", 1.0f), \
             COMBO("dither", "Dithering mode", "Dithering", 0, clipper_dither_modes), \
             SWITCH("clog", "Clipper logarithmic display", "Log display", 1.0f), \
             SWITCH("op", "Overdrive protection", "ODP", 1.0f), \
-            CONTROL("th", "Overdrive protection threshold", U_DB, clipper::ODP_THRESHOLD), \
-            CONTROL("kn", "Overdrive protection knee", U_DB, clipper::ODP_KNEE), \
+            CONTROL("th", "Overdrive protection threshold", "ODP thresh", U_DB, clipper::ODP_THRESHOLD), \
+            CONTROL("kn", "Overdrive protection knee", "ODP knee", U_DB, clipper::ODP_KNEE), \
             LOG_CONTROL("or", "Overdrive protection reactivity", "ODP react", U_MSEC, clipper::ODP_REACT), \
             MESH("opc", "Overdrive protection chart", 2, clipper::CURVE_MESH_POINTS), \
             SWITCH("ce", "Clipper enable", "Clip on", 1.0f), \
             COMBO("cf", "Clipper sigmoid function", "Function", 2.0f, sigmoid_functions), \
             LOG_CONTROL("ct", "Clipper sigmoid threshold", "Thresh", U_GAIN_AMP, clipper::CLIP_THRESHOLD), \
-            CONTROL("cp", "Clipper sigmoid pumping", U_DB, clipper::CLIP_PUMPING), \
+            CONTROL("cp", "Clipper sigmoid pumping", "Pumping", U_DB, clipper::CLIP_PUMPING), \
             MESH("cfc", "Clipper sigmoid function chart", 4, clipper::CURVE_MESH_POINTS)
 
         #define CLIPPER_COMMON_STEREO \
             CLIPPER_COMMON, \
-            CONTROL_DFL("slink", "Stereo link", U_PERCENT, clipper::STEREO_LINK, 50.0f)
+            CONTROL_DFL("slink", "Stereo link", "Slink", U_PERCENT, clipper::STEREO_LINK, 50.0f)
 
         #define CLIPPER_METERS(id, label) \
             METER_OUT_GAIN("ilm" id, "Input level meter" label, GAIN_AMP_P_36_DB), \
