@@ -11,6 +11,7 @@
 					<button id="op" ui:inject="Button_green" text="labels.odp"/>
 					<button id="ce" text="labels.signal.clipping" pad.l="8"/>
 					<button id="clog" text="labels.log_scale" ui:inject="Button_yellow"/>
+					<button id="dcomp" text="labels.signal.dc_compensate" ui:inject="Button_cyan"/>
 
 					<label text="labels.function" pad.l="8"/>
 				</ui:with>
@@ -157,7 +158,7 @@
 						<value id="th" sline="true" halign="0"/>
 					</vbox>
 				</hbox>
-
+				
 				<!-- knee -->
 				<hbox fill="false">
 					<knob id="kn" scolor=":op ? 'green' : 'cycle_inactive'"/>
@@ -216,7 +217,8 @@
 
 							<!-- Meshes -->
 							<mesh id="cfc" x.index="0" y.index="1" width="3" color=":ce ? 'graph_mesh': 'graph_prim'" smooth="true"/>
-							<dot x.id="cfx" y.id="cfy" color="dot" bcolor="dot" visibility=":ce"/>
+							<dot x.id="cfx1" y.id="cfy1" color="dot" bcolor="dot" visibility=":ce"/>
+							<dot x.id="cfx2" y.id="cfy2" color="dot" bcolor="dot" visibility=":ce"/>
 
 							<!-- Markers -->
 							<marker
@@ -307,7 +309,8 @@
 
 							<!-- Meshes -->
 							<mesh id="cfc" x.index="2" y.index="3" width="3" color=":ce ? 'graph_mesh': 'graph_prim'" smooth="true"/>
-							<dot x.id="cfx" y.id="cfy" color="dot" bcolor="dot" visibility=":ce"/>
+							<dot x.id="cfx1" y.id="cfy1" color="dot" bcolor="dot" visibility=":ce"/>
+							<dot x.id="cfx2" y.id="cfy2" color="dot" bcolor="dot" visibility=":ce"/>
 
 							<!-- Markers -->
 							<marker
@@ -406,12 +409,21 @@
 			<ui:with bg.bright="!:ce ? :const_bg_darken : 1.0" bright="!:ce ? 0.75 : 1.0">
 			<hbox pad.v="4">
 				<void hexpand="true" hfill="true"/>
-				<!-- thres -->
+				<!-- thresh -->
 				<hbox fill="false" pad.l="6" pad.r="10">
 					<knob id="ct" scolor=":ce and :cf ine 0 ? 'threshold' : 'cycle_inactive'"/>
 					<vbox vfill="false" width="50" pad.l="4">
 						<label text="labels.thresh_old" halign="0"/>
 						<value id="ct" sline="true" halign="0"/>
+					</vbox>
+				</hbox>
+				
+				<!-- DC offset -->
+				<hbox fill="false" pad.r="6">
+					<knob id="dcoff" scolor=":ce ? 'kscale' : 'cycle_inactive'"/>
+					<vbox vfill="false" width="50" pad.l="4">
+						<label text="labels.signal.dc_offset" halign="-1"/>
+						<value id="dcoff" sline="true" halign="0"/>
 					</vbox>
 				</hbox>
 

@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-plugins-clipper
  * Created on: 01 дек 2023 г.
@@ -29,13 +29,13 @@
 
 #include <private/plugins/clipper.h>
 
-/* The size of temporary buffer for audio processing */
-#define BUFFER_SIZE         0x400U
-
 namespace lsp
 {
     namespace plugins
     {
+        /* The size of temporary buffer for audio processing */
+        static constexpr size_t BUFFER_SIZE     = 0x400;
+
         //---------------------------------------------------------------------
         // Plugin factory
         static const meta::plugin_t *plugins[] =
@@ -99,6 +99,7 @@ namespace lsp
 
             sClip.pFunc             = NULL;
             sClip.fThreshold        = 0.0f;
+            sClip.fDCOffset         = 0.0f;
             sClip.fPumping          = 1.0f;
             sClip.fScaling          = 0.0f;
             sClip.fKnee             = 0.0f;
@@ -106,6 +107,8 @@ namespace lsp
             sClip.pOn               = NULL;
             sClip.pFunction         = NULL;
             sClip.pThreshold        = NULL;
+            sClip.pDCOffset         = NULL;
+            sClip.pDCCompensate     = NULL;
             sClip.pPumping          = NULL;
             sClip.pCurveMesh        = NULL;
 
@@ -292,8 +295,10 @@ namespace lsp
                 c->fOdpOut              = GAIN_AMP_M_INF_DB;
                 c->fOdpRed              = GAIN_AMP_M_INF_DB;
 
-                c->fClipIn              = GAIN_AMP_M_INF_DB;
-                c->fClipOut             = GAIN_AMP_M_INF_DB;
+                c->fClipIn[0]           = GAIN_AMP_M_INF_DB;
+                c->fClipIn[1]           = GAIN_AMP_M_INF_DB;
+                c->fClipOut[0]          = GAIN_AMP_M_INF_DB;
+                c->fClipOut[1]          = GAIN_AMP_M_INF_DB;
                 c->fClipRed             = GAIN_AMP_M_INF_DB;
 
                 c->vIn                  = NULL;
@@ -317,8 +322,10 @@ namespace lsp
                 c->pOdpOut              = NULL;
                 c->pOdpRed              = NULL;
 
-                c->pClipIn              = NULL;
-                c->pClipOut             = NULL;
+                c->pClipIn[0]           = NULL;
+                c->pClipIn[1]           = NULL;
+                c->pClipOut[0]          = NULL;
+                c->pClipOut[1]          = NULL;
                 c->pClipRed             = NULL;
 
                 c->pTimeMesh            = NULL;
@@ -332,50 +339,53 @@ namespace lsp
 
             // Bind input audio ports
             for (size_t i=0; i<nChannels; ++i)
-                vChannels[i].pDataIn    = trace_port(ports[port_id++]);
+                BIND_PORT(vChannels[i].pDataIn);
 
             // Bind output audio ports
             for (size_t i=0; i<nChannels; ++i)
-                vChannels[i].pDataOut   = trace_port(ports[port_id++]);
+                BIND_PORT(vChannels[i].pDataOut);
 
             // Bind common ports
             lsp_trace("Binding common ports");
-            pBypass             = trace_port(ports[port_id++]);
-            pGainIn             = trace_port(ports[port_id++]);
-            pGainOut            = trace_port(ports[port_id++]);
-            sLufs.pOn           = trace_port(ports[port_id++]);
-            sLufs.pThreshold    = trace_port(ports[port_id++]);
-            sLufs.pIn           = trace_port(ports[port_id++]);
-            sLufs.pRed          = trace_port(ports[port_id++]);
-            pLufsIn             = trace_port(ports[port_id++]);
-            pLufsOut            = trace_port(ports[port_id++]);
-            pThresh             = trace_port(ports[port_id++]);
-            pBoosting           = trace_port(ports[port_id++]);
-            pDithering          = trace_port(ports[port_id++]);
-            trace_port(ports[port_id++]); // Skip clipper linear/logarithmic graph view
+            BIND_PORT(pBypass);
+            BIND_PORT(pGainIn);
+            BIND_PORT(pGainOut);
+            BIND_PORT(sLufs.pOn);
+            BIND_PORT(sLufs.pThreshold);
+            BIND_PORT(sLufs.pIn);
+            BIND_PORT(sLufs.pRed);
+            BIND_PORT(pLufsIn);
+            BIND_PORT(pLufsOut);
+            BIND_PORT(pThresh);
+            BIND_PORT(pBoosting);
+            BIND_PORT(pDithering);
+            SKIP_PORT("Linear/Logarithmic view"); // Skip clipper linear/logarithmic graph view
 
             // Bind clipper ports
             lsp_trace("Binding clipper ports");
-            sOdp.pOn                = trace_port(ports[port_id++]);
-            sOdp.pThreshold         = trace_port(ports[port_id++]);
-            sOdp.pKnee              = trace_port(ports[port_id++]);
-            sOdp.pReactivity        = trace_port(ports[port_id++]);
-            sOdp.pCurveMesh         = trace_port(ports[port_id++]);
-            sClip.pOn               = trace_port(ports[port_id++]);
-            sClip.pFunction         = trace_port(ports[port_id++]);
-            sClip.pThreshold        = trace_port(ports[port_id++]);
-            sClip.pPumping          = trace_port(ports[port_id++]);
-            sClip.pCurveMesh        = trace_port(ports[port_id++]);
-            pStereoLink             = (nChannels > 1) ? trace_port(ports[port_id++]) : NULL;
+            BIND_PORT(sOdp.pOn);
+            BIND_PORT(sOdp.pThreshold);
+            BIND_PORT(sOdp.pKnee);
+            BIND_PORT(sOdp.pReactivity);
+            BIND_PORT(sOdp.pCurveMesh);
+            BIND_PORT(sClip.pOn);
+            BIND_PORT(sClip.pFunction);
+            BIND_PORT(sClip.pThreshold);
+            BIND_PORT(sClip.pDCOffset);
+            BIND_PORT(sClip.pDCCompensate);
+            BIND_PORT(sClip.pPumping);
+            BIND_PORT(sClip.pCurveMesh);
+            if (nChannels > 1)
+                BIND_PORT(pStereoLink);
 
             lsp_trace("Skipping graph visibility ports");
             for (size_t i=0; i<nChannels; ++i)
             {
                 channel_t *c            = &vChannels[i];
 
-                c->pInVisible           = trace_port(ports[port_id++]);
-                c->pOutVisible          = trace_port(ports[port_id++]);
-                c->pRedVisible          = trace_port(ports[port_id++]);
+                BIND_PORT(c->pInVisible);
+                BIND_PORT(c->pOutVisible);
+                BIND_PORT(c->pRedVisible);
             }
 
             // Bind channel metering
@@ -384,19 +394,21 @@ namespace lsp
             {
                 channel_t *c            = &vChannels[i];
 
-                c->pIn                  = trace_port(ports[port_id++]);
-                c->pOut                 = trace_port(ports[port_id++]);
-                c->pRed                 = trace_port(ports[port_id++]);
+                BIND_PORT(c->pIn);
+                BIND_PORT(c->pOut);
+                BIND_PORT(c->pRed);
 
-                c->pOdpIn               = trace_port(ports[port_id++]);
-                c->pOdpOut              = trace_port(ports[port_id++]);
-                c->pOdpRed              = trace_port(ports[port_id++]);
+                BIND_PORT(c->pOdpIn);
+                BIND_PORT(c->pOdpOut);
+                BIND_PORT(c->pOdpRed);
 
-                c->pClipIn              = trace_port(ports[port_id++]);
-                c->pClipOut             = trace_port(ports[port_id++]);
-                c->pClipRed             = trace_port(ports[port_id++]);
+                BIND_PORT(c->pClipIn[0]);
+                BIND_PORT(c->pClipOut[0]);
+                BIND_PORT(c->pClipIn[1]);
+                BIND_PORT(c->pClipOut[1]);
+                BIND_PORT(c->pClipRed);
 
-                c->pTimeMesh            = trace_port(ports[port_id++]);
+                BIND_PORT(c->pTimeMesh);
             }
 
             // Initialize horizontal axis values for each curve
@@ -480,15 +492,18 @@ namespace lsp
         {
             dspu::sigmoid::function_t func = vSigmoidFunctions[size_t(params->pFunction->value())];
             const float threshold   = lsp_min(params->pThreshold->value(), 0.99f);
+            const float dc_off      = params->pDCOffset->value() * 0.01f;
             const float pumping     = dspu::db_to_gain(params->pPumping->value());
 
             if ((func == params->pFunc) &&
                 (threshold == params->fThreshold) &&
+                (dc_off == params->fDCOffset) &&
                 (pumping == params->fPumping))
                 return false;
 
             params->pFunc           = func;
             params->fThreshold      = threshold;
+            params->fDCOffset       = dc_off;
             params->fPumping        = pumping;
             params->fKnee           = 1.0f - threshold;
             params->fScaling        = 1.0f / params->fKnee;
@@ -582,9 +597,8 @@ namespace lsp
         void clipper::clip_curve(float *dst, const float *x, const clip_params_t *p, size_t count)
         {
             for (size_t i=0; i<count; ++i)
-                dst[i]      = clip_curve(p, x[i]);
+                dst[i]          = clip_curve(p, x[i]);
         }
-
 
         void clipper::update_settings()
         {
@@ -608,6 +622,7 @@ namespace lsp
                 nFlags                 |= CF_SYNC_ODP;
             }
             nFlags                  = lsp_setflag(nFlags, CF_CLIP_ENABLED, sClip.pOn->value() >= 0.5f);
+            nFlags                  = lsp_setflag(nFlags, CF_DC_COMPENSATE, sClip.pDCCompensate->value() >= 0.5f);
             if (update_clip_params(&sClip))
                 nFlags                 |= CF_SYNC_CLIP;
 
@@ -661,8 +676,10 @@ namespace lsp
                 c->fOdpOut          = GAIN_AMP_M_INF_DB;
                 c->fOdpRed          = GAIN_AMP_P_72_DB;
 
-                c->fClipIn          = GAIN_AMP_M_INF_DB;
-                c->fClipOut         = GAIN_AMP_M_INF_DB;
+                c->fClipIn[0]       = GAIN_AMP_M_INF_DB;
+                c->fClipIn[1]       = GAIN_AMP_M_INF_DB;
+                c->fClipOut[0]      = GAIN_AMP_M_INF_DB;
+                c->fClipOut[1]      = GAIN_AMP_M_INF_DB;
                 c->fClipRed         = GAIN_AMP_P_72_DB;
             }
         }
@@ -676,6 +693,106 @@ namespace lsp
                 c->vIn             += samples;
                 c->vOut            += samples;
             }
+        }
+
+        void clipper::process_odp_channel(channel_t *c, size_t samples)
+        {
+            if (!(nFlags & CF_ODP_ENABLED))
+            {
+                dsp::fill_one(c->vSc, samples);
+
+                c->fOdpIn               = GAIN_AMP_M_INF_DB;
+                c->fOdpOut              = GAIN_AMP_M_INF_DB;
+                c->fOdpRed              = GAIN_AMP_0_DB;
+
+                return;
+            }
+
+            // Measure input signal
+            const size_t odp_idx    = dsp::abs_max_index(c->vSc, samples);
+            const float odp_in      = c->vSc[odp_idx];
+
+            // Apply ODP
+            odp_gain(c->vSc, c->vSc, &sComp, samples);
+            dsp::mul2(c->vData, c->vSc, samples);
+
+            // Measure output
+            const float odp_red     = c->vSc[odp_idx];
+            const float odp_out     = odp_in * odp_red;
+
+            c->fOdpIn               = lsp_max(c->fOdpIn, odp_in);
+            c->fOdpOut              = lsp_max(c->fOdpOut, odp_out);
+            c->fOdpRed              = lsp_min(c->fOdpRed, odp_red);
+        }
+
+        void clipper::process_clip_channel(channel_t *c, size_t samples)
+        {
+            // Check that clipping is enabled
+            if (!(nFlags & CF_CLIP_ENABLED))
+            {
+                c->fClipIn[0]           = GAIN_AMP_M_INF_DB;
+                c->fClipIn[1]           = GAIN_AMP_M_INF_DB;
+                c->fClipOut[0]          = GAIN_AMP_M_INF_DB;
+                c->fClipOut[1]          = GAIN_AMP_M_INF_DB;
+                c->fClipRed             = GAIN_AMP_0_DB;
+
+                return;
+            }
+
+            // Mesure input
+            const float dc      = sClip.fDCOffset;
+            size_t clip_idx[2];
+            float clip_in[2], clip_out[2];
+
+            // Do clipping
+            if (dc != 0.0f)
+            {
+                // Apply DC offset
+                dsp::add_k2(c->vData, dc, samples);
+
+                // Perform clipping
+                dsp::minmax_index(c->vData, samples, &clip_idx[0], &clip_idx[1]);
+                clip_in[0]          = fabsf(c->vData[clip_idx[0]]);
+                clip_in[1]          = fabsf(c->vData[clip_idx[1]]);
+
+                clip_curve(c->vData, c->vData, &sClip, samples);
+
+                clip_out[0]         = fabsf(c->vData[clip_idx[0]]);
+                clip_out[1]         = fabsf(c->vData[clip_idx[1]]);
+
+                // Revert DC offset
+                if (nFlags & CF_DC_COMPENSATE)
+                    dsp::sub_k2(c->vData, dc, samples);
+            }
+            else
+            {
+                clip_idx[0]         = dsp::abs_max_index(c->vData, samples);
+                clip_idx[1]         = clip_idx[0];
+                clip_in[0]          = fabsf(c->vData[clip_idx[0]]);
+                clip_in[1]          = clip_in[0];
+
+                clip_curve(c->vData, c->vData, &sClip, samples);
+
+                clip_out[0]         = fabsf(c->vData[clip_idx[0]]);
+                clip_out[1]         = clip_out[0];
+            }
+
+            // Measure output
+            if (clip_in[0] > c->fClipIn[0])
+            {
+                c->fClipIn[0]           = clip_in[0];
+                c->fClipOut[0]          = clip_out[0];
+            }
+            if (clip_in[1] > c->fClipIn[1])
+            {
+                c->fClipIn[1]           = clip_in[1];
+                c->fClipOut[1]          = clip_out[1];
+            }
+
+            // Compute gain reduction
+            const size_t imax       = (clip_in[0] >= clip_in[1]) ? 0 : 1;
+            const float clip_red    = (clip_in[imax] >= GAIN_AMP_M_120_DB) ? clip_out[imax] / clip_in[imax] : GAIN_AMP_0_DB;
+            c->fClipRed             = lsp_min(c->fClipRed, clip_red);
         }
 
         void clipper::process_clipper(size_t samples)
@@ -740,86 +857,13 @@ namespace lsp
                 l->sInGraph.process(l->vData, samples);
                 r->sInGraph.process(r->vData, samples);
 
-                // Overdrive protection
-                if (nFlags & CF_ODP_ENABLED)
-                {
-                    // Measure input signal
-                    const size_t odp_idx_l  = dsp::abs_max_index(l->vSc, samples);
-                    const size_t odp_idx_r  = dsp::abs_max_index(r->vSc, samples);
-                    const float odp_in_l    = l->vSc[odp_idx_l];
-                    const float odp_in_r    = r->vSc[odp_idx_r];
+                // Apply overdrive protection
+                process_odp_channel(l, samples);
+                process_odp_channel(r, samples);
 
-                    // Apply ODP
-                    odp_gain(l->vSc, l->vSc, &sComp, samples);
-                    odp_gain(r->vSc, r->vSc, &sComp, samples);
-                    dsp::mul2(l->vData, l->vSc, samples);
-                    dsp::mul2(r->vData, r->vSc, samples);
-
-                    // Measure output
-                    const float odp_red_l   = l->vSc[odp_idx_l];
-                    const float odp_red_r   = r->vSc[odp_idx_r];
-                    const float odp_out_l   = odp_in_l * odp_red_l;
-                    const float odp_out_r   = odp_in_r * odp_red_r;
-
-                    l->fOdpIn               = lsp_max(l->fOdpIn, odp_in_l);
-                    l->fOdpOut              = lsp_max(l->fOdpOut, odp_out_l);
-                    l->fOdpRed              = lsp_min(l->fOdpRed, odp_red_l);
-
-                    r->fOdpIn               = lsp_max(r->fOdpIn, odp_in_r);
-                    r->fOdpOut              = lsp_max(r->fOdpOut, odp_out_r);
-                    r->fOdpRed              = lsp_min(r->fOdpRed, odp_red_r);
-                }
-                else
-                {
-                    dsp::fill_one(l->vSc, samples);
-                    dsp::fill_one(r->vSc, samples);
-
-                    l->fOdpIn               = GAIN_AMP_M_INF_DB;
-                    l->fOdpOut              = GAIN_AMP_M_INF_DB;
-                    l->fOdpRed              = GAIN_AMP_0_DB;
-
-                    r->fOdpIn               = GAIN_AMP_M_INF_DB;
-                    r->fOdpOut              = GAIN_AMP_M_INF_DB;
-                    r->fOdpRed              = GAIN_AMP_0_DB;
-                }
-
-                // Clipping
-                if (nFlags & CF_CLIP_ENABLED)
-                {
-                    // Mesure input
-                    const size_t clip_idx_l = dsp::abs_max_index(l->vData, samples);
-                    const size_t clip_idx_r = dsp::abs_max_index(r->vData, samples);
-                    const float clip_in_l   = fabsf(l->vData[clip_idx_l]);
-                    const float clip_in_r   = fabsf(r->vData[clip_idx_r]);
-
-                    // Do clipping
-                    clip_curve(l->vData, l->vData, &sClip, samples);
-                    clip_curve(r->vData, r->vData, &sClip, samples);
-
-                    // Measure output
-                    const float clip_out_l  = fabsf(l->vData[clip_idx_l]);
-                    const float clip_out_r  = fabsf(r->vData[clip_idx_r]);
-                    const float clip_red_l  = (clip_in_l >= GAIN_AMP_M_120_DB) ? clip_out_l / clip_in_l : GAIN_AMP_0_DB;
-                    const float clip_red_r  = (clip_in_r >= GAIN_AMP_M_120_DB) ? clip_out_r / clip_in_r : GAIN_AMP_0_DB;
-
-                    l->fClipIn              = lsp_max(l->fClipIn, clip_in_l);
-                    l->fClipOut             = lsp_max(l->fClipOut, clip_out_l);
-                    l->fClipRed             = lsp_min(l->fClipRed, clip_red_l);
-
-                    r->fClipIn              = lsp_max(r->fClipIn, clip_in_r);
-                    r->fClipOut             = lsp_max(r->fClipOut, clip_out_r);
-                    r->fClipRed             = lsp_min(r->fClipRed, clip_red_r);
-                }
-                else
-                {
-                    l->fClipIn              = GAIN_AMP_M_INF_DB;
-                    l->fClipOut             = GAIN_AMP_M_INF_DB;
-                    l->fClipRed             = GAIN_AMP_0_DB;
-
-                    r->fClipIn              = GAIN_AMP_M_INF_DB;
-                    r->fClipOut             = GAIN_AMP_M_INF_DB;
-                    r->fClipRed             = GAIN_AMP_0_DB;
-                }
+                // Apply clipping
+                process_clip_channel(l, samples);
+                process_clip_channel(r, samples);
 
                 // Perform output metering
                 const float out_l       = fabsf(l->vData[idx_in_l]);
@@ -878,58 +922,11 @@ namespace lsp
                 const float in          = fabsf(c->vData[idx_in]);
                 c->sInGraph.process(c->vData, samples);
 
-                // Overdrive protection
-                if (nFlags & CF_ODP_ENABLED)
-                {
-                    // Measure input signal
-                    const size_t odp_idx    = dsp::abs_max_index(c->vSc, samples);
-                    const float odp_in      = c->vSc[odp_idx];
+                // Apply overdrive protection
+                process_odp_channel(c, samples);
 
-                    // Apply ODP
-                    odp_gain(c->vSc, c->vSc, &sComp, samples);
-                    dsp::mul2(c->vData, c->vSc, samples);
-
-                    // Measure output
-                    const float odp_red     = c->vSc[odp_idx];
-                    const float odp_out     = odp_in * odp_red;
-
-                    c->fOdpIn               = lsp_max(c->fOdpIn, odp_in);
-                    c->fOdpOut              = lsp_max(c->fOdpOut, odp_out);
-                    c->fOdpRed              = lsp_min(c->fOdpRed, odp_red);
-                }
-                else
-                {
-                    dsp::fill_one(c->vSc, samples);
-
-                    c->fOdpIn               = GAIN_AMP_M_INF_DB;
-                    c->fOdpOut              = GAIN_AMP_M_INF_DB;
-                    c->fOdpRed              = GAIN_AMP_0_DB;
-                }
-
-                // Clipping
-                if (nFlags & CF_CLIP_ENABLED)
-                {
-                    // Mesure input
-                    const size_t clip_idx   = dsp::abs_max_index(c->vData, samples);
-                    const float clip_in     = fabsf(c->vData[clip_idx]);
-
-                    // Do clipping
-                    clip_curve(c->vData, c->vData, &sClip, samples);
-
-                    // Measure output
-                    const float clip_out    = fabsf(c->vData[clip_idx]);
-                    const float clip_red    = (clip_in >= GAIN_AMP_M_120_DB) ? clip_out / clip_in : GAIN_AMP_0_DB;
-
-                    c->fClipIn              = lsp_max(c->fClipIn, clip_in);
-                    c->fClipOut             = lsp_max(c->fClipOut, clip_out);
-                    c->fClipRed             = lsp_min(c->fClipRed, clip_red);
-                }
-                else
-                {
-                    c->fClipIn              = GAIN_AMP_M_INF_DB;
-                    c->fClipOut             = GAIN_AMP_M_INF_DB;
-                    c->fClipRed             = GAIN_AMP_0_DB;
-                }
+                // Apply clipping
+                process_clip_channel(c, samples);
 
                 // Perform output metering
                 const float out         = fabsf(c->vData[idx_in]);
@@ -995,8 +992,10 @@ namespace lsp
                 c->pOdpOut->set_value(c->fOdpOut);
                 c->pOdpRed->set_value(c->fOdpRed);
 
-                c->pClipIn->set_value(c->fClipIn);
-                c->pClipOut->set_value(c->fClipOut);
+                c->pClipIn[0]->set_value(c->fClipIn[0]);
+                c->pClipIn[1]->set_value(c->fClipIn[1]);
+                c->pClipOut[0]->set_value(c->fClipOut[0]);
+                c->pClipOut[1]->set_value(c->fClipOut[1]);
                 c->pClipRed->set_value(c->fClipRed);
             }
 
@@ -1321,8 +1320,8 @@ namespace lsp
                         v->write("fOdpOut", c->fOdpOut);
                         v->write("fOdpRed", c->fOdpRed);
 
-                        v->write("fClipIn", c->fClipIn);
-                        v->write("fClipOut", c->fClipOut);
+                        v->writev("fClipIn", c->fClipIn, 2);
+                        v->writev("fClipOut", c->fClipOut, 2);
                         v->write("fClipRed", c->fClipRed);
 
                         v->write("vIn", c->vIn);
@@ -1345,8 +1344,8 @@ namespace lsp
                         v->write("pOdpOut", c->pOdpOut);
                         v->write("pOdpRed", c->pOdpRed);
 
-                        v->write("pClipIn", c->pClipIn);
-                        v->write("pClipOut", c->pClipOut);
+                        v->writev("pClipIn", c->pClipIn, 2);
+                        v->writev("pClipOut", c->pClipOut, 2);
                         v->write("pClipRed", c->pClipRed);
 
                         v->write("pTimeMesh", c->pTimeMesh);
@@ -1394,6 +1393,7 @@ namespace lsp
 
                 v->write("pFunc", c->pFunc);
                 v->write("fThreshold", c->fThreshold);
+                v->write("fDCOffset", c->fDCOffset);
                 v->write("fPumping", c->fPumping);
                 v->write("fScaling", c->fScaling);
                 v->write("fKnee", c->fKnee);
@@ -1401,6 +1401,8 @@ namespace lsp
                 v->write("pOn", c->pOn);
                 v->write("pFunction", c->pFunction);
                 v->write("pThreshold", c->pThreshold);
+                v->write("pDCOffset", c->pDCOffset);
+                v->write("pDCCompensate", c->pDCCompensate);
                 v->write("pPumping", c->pPumping);
                 v->write("pCurveMesh", c->pCurveMesh);
             }

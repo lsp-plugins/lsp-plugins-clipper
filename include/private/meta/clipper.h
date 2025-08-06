@@ -53,6 +53,11 @@ namespace lsp
             static constexpr float  THRESHOLD_DFL           = 0.0f;
             static constexpr float  THRESHOLD_STEP          = 0.01f;
 
+            static constexpr float  DCOFF_MIN               = -100.0f;
+            static constexpr float  DCOFF_MAX               = 100.0f;
+            static constexpr float  DCOFF_DFL               = 0.0f;
+            static constexpr float  DCOFF_STEP              = 0.05f;
+
             static constexpr float  HPF_FREQ_MIN            = 10.0f;
             static constexpr float  HPF_FREQ_MAX            = 60.0f;
             static constexpr float  HPF_FREQ_DFL            = 30.0f;

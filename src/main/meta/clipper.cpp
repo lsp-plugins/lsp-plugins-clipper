@@ -91,8 +91,10 @@ namespace lsp
             SWITCH("ce", "Clipper enable", "Clip on", 1.0f), \
             COMBO("cf", "Clipper sigmoid function", "Function", 2.0f, sigmoid_functions), \
             LOG_CONTROL("ct", "Clipper sigmoid threshold", "Thresh", U_GAIN_AMP, clipper::CLIP_THRESHOLD), \
+            CONTROL("dcoff", "Clipper DC offset", "DC offset", U_PERCENT, clipper::DCOFF), \
+            SWITCH("dcomp", "Clipper DC compensate", "DC compensate", 1.0f), \
             CONTROL("cp", "Clipper sigmoid pumping", "Pumping", U_DB, clipper::CLIP_PUMPING), \
-            MESH("cfc", "Clipper sigmoid function chart", 4, clipper::CURVE_MESH_POINTS)
+            MESH("cfc", "Clipper sigmoid function chart", 6, clipper::CURVE_MESH_POINTS)
 
         #define CLIPPER_COMMON_STEREO \
             CLIPPER_COMMON, \
@@ -105,8 +107,10 @@ namespace lsp
             METER_OUT_GAIN("odx" id, "Overdrive protection input meter" label, GAIN_AMP_P_36_DB), \
             METER_OUT_GAIN("ody" id, "Overdrive protection output meter" label, GAIN_AMP_P_36_DB), \
             METER_GAIN_DFL("odr" id, "Overdrive protection reduction level meter" label, GAIN_AMP_P_72_DB, GAIN_AMP_0_DB), \
-            METER_OUT_GAIN("cfx" id, "Clipping function input meter" label, GAIN_AMP_P_36_DB), \
-            METER_OUT_GAIN("cfy" id, "Clipping function output meter" label, GAIN_AMP_P_36_DB), \
+            METER_OUT_GAIN("cfx1" id, "Clipping function input meter 1" label, GAIN_AMP_P_36_DB), \
+            METER_OUT_GAIN("cfy1" id, "Clipping function output meter 1" label, GAIN_AMP_P_36_DB), \
+            METER_OUT_GAIN("cfx2" id, "Clipping function input meter 2" label, GAIN_AMP_P_36_DB), \
+            METER_OUT_GAIN("cfy2" id, "Clipping function output meter 2" label, GAIN_AMP_P_36_DB), \
             METER_GAIN_DFL("cfr" id, "Clipping function reduction level meter" label, GAIN_AMP_P_72_DB, GAIN_AMP_0_DB), \
             MESH("ctg" id, "Clipper time graph" label, 4, clipper::TIME_MESH_POINTS + 4)
 

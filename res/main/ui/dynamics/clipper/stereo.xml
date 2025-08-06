@@ -11,6 +11,7 @@
 					<button id="op" ui:inject="Button_green" text="labels.odp"/>
 					<button id="ce" text="labels.signal.clipping" pad.l="8"/>
 					<button id="clog" text="labels.log_scale" ui:inject="Button_yellow"/>
+					<button id="dcomp" text="labels.signal.dc_compensate" ui:inject="Button_cyan"/>
 
 					<label text="labels.function" pad.l="8"/>
 				</ui:with>
@@ -228,8 +229,10 @@
 
 								<!-- Meshes -->
 								<mesh id="cfc" x.index="0" y.index="1" width="3" color=":ce ? 'graph_mesh': 'graph_prim'" smooth="true"/>
-								<dot x.id="cfx_l" y.id="cfy_l" color="left" bcolor="left" visibility=":ce"/>
-								<dot x.id="cfx_r" y.id="cfy_r" color="right" bcolor="right" visibility=":ce"/>
+								<dot x.id="cfx1_l" y.id="cfy1_l" color="left" bcolor="left" visibility=":ce"/>
+								<dot x.id="cfx2_l" y.id="cfy2_l" color="left" bcolor="left" visibility=":ce"/>
+								<dot x.id="cfx1_r" y.id="cfy1_r" color="right" bcolor="right" visibility=":ce"/>
+								<dot x.id="cfx2_r" y.id="cfy2_r" color="right" bcolor="right" visibility=":ce"/>
 
 								<!-- Markers -->
 								<marker
@@ -320,8 +323,10 @@
 
 								<!-- Meshes -->
 								<mesh id="cfc" x.index="2" y.index="3" width="3" color=":ce ? 'graph_mesh': 'graph_prim'" smooth="true"/>
-								<dot x.id="cfx_l" y.id="cfy_l" color="left" bcolor="left" visibility=":ce"/>
-								<dot x.id="cfx_r" y.id="cfy_r" color="right" bcolor="right" visibility=":ce"/>
+								<dot x.id="cfx1_l" y.id="cfy1_l" color="left" bcolor="left" visibility=":ce"/>
+								<dot x.id="cfx2_l" y.id="cfy2_l" color="left" bcolor="left" visibility=":ce"/>
+								<dot x.id="cfx1_r" y.id="cfy1_r" color="right" bcolor="right" visibility=":ce"/>
+								<dot x.id="cfx2_r" y.id="cfy2_r" color="right" bcolor="right" visibility=":ce"/>
 
 								<!-- Markers -->
 								<marker
@@ -431,12 +436,21 @@
 			<ui:with bg.bright="!:ce ? :const_bg_darken : 1.0" bright="!:ce ? 0.75 : 1.0">
 				<hbox pad.v="4">
 					<void hexpand="true" hfill="true"/>
-					<!-- thres -->
+					<!-- thresh -->
 					<hbox fill="false" pad.l="6" pad.r="10">
 						<knob id="ct" scolor=":ce and :cf ine 0 ? 'threshold' : 'cycle_inactive'"/>
 						<vbox vfill="false" width="50" pad.l="4">
 							<label text="labels.thresh_old" halign="0"/>
 							<value id="ct" sline="true" halign="0"/>
+						</vbox>
+					</hbox>
+					
+					<!-- DC offset -->
+					<hbox fill="false" pad.r="6">
+						<knob id="dcoff" scolor=":ce ? 'kscale' : 'cycle_inactive'"/>
+						<vbox vfill="false" width="50" pad.l="4">
+							<label text="labels.signal.dc_offset" halign="-1"/>
+							<value id="dcoff" sline="true" halign="0"/>
 						</vbox>
 					</hbox>
 
