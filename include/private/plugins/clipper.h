@@ -125,6 +125,7 @@ namespace lsp
                     dspu::Dither        sDither;            // Dither
                     dspu::MeterGraph    sInGraph;           // Input meter graph
                     dspu::MeterGraph    sOutGraph;          // Output meter graph
+                    dspu::MeterGraph    sRedGraph;          // Reduction meter graph
 
                     // Channel flags
                     uint32_t            nFlags;             // Channel flags
@@ -145,6 +146,8 @@ namespace lsp
                     // Buffers
                     float              *vIn;                // Input buffer
                     float              *vOut;               // Output buffer
+                    float              *vInMeter;           // Input data metering
+                    float              *vRedMeter;          // Reduction metering
                     float              *vData;              // Data buffer
                     float              *vSc;                // Sidechain buffer
 
@@ -234,6 +237,7 @@ namespace lsp
                 void                    bind_input_buffers();
                 void                    process_odp_channel(channel_t *c, size_t samples);
                 void                    process_clip_channel(channel_t *c, size_t samples);
+                void                    meter_channel(channel_t *c, size_t samples);
                 void                    process_clipper(size_t samples);
                 void                    output_signal(size_t samples);
                 void                    advance_buffers(size_t samples);
