@@ -22,11 +22,13 @@
 	<li><b>ODP</b> - enabled overdrive protection compressor.</li>
 	<li><b>Clipping</b> - enables clipping function applied to the signal.</li>
 	<li><b>Log Scale</b> - switches clipping function graph representation in linear/logarithmic scale.</li>
+	<li><b>DC Compensate</b> - enables compensation of the DC offset applied at the clipping stage.</li>
 	<li><b>Function</b> - clipping function</li>
 	<li><b>ODP Thresh</b> - the threshold of the overdrive protection compressor.</li>
 	<li><b>ODP Knee</b> - the knee of the overdrive protection compressor.</li>
 	<li><b>ODP Meter</b> - the amount of gain reduction applied to the signal while compressing it's peaks.</li>
 	<li><b>Clip Thresh</b> - the threshold of the clipping function. Signals below the threshold have constant amplification.</li>
+	<li><b>Clip DC offset</b> - the additional DC offset applied to the signal before clipping stage.</li>
 	<li><b>Clip Pumping</b> - additional way to pump the loudness of the band by applying extra amplification and keeping peaks not greater than 0 dB.</li>
 	<li><b>Clip Meter</b> - the amount of gain reduction applied at the clipping stage.</li>	
 	<li><b>Reactivity</b> - sets up the reactivity of the ODP compressor.</li>
