@@ -3,6 +3,7 @@
 *******************************************************************************
 
 === 1.0.10 ===
+* Added DC offset control at the clipping stage.
 * Updated build scripts and dependencies.
 
 === 1.0.9 ===

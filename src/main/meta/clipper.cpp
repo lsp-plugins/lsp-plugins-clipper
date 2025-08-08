@@ -69,7 +69,14 @@ namespace lsp
             { NULL, NULL }
         };
 
-        #define CLIPPER_COMMON \
+        static port_item_t clipper_views[] =
+        {
+            { "Dynamics",           "clipper.view.dynamics"                 },
+            { "Waveform",           "clipper.view.waveform"                 },
+            { NULL, NULL }
+        };
+
+        #define CLIPPER_COMMON(channels) \
             BYPASS, \
             IN_GAIN, \
             OUT_GAIN, \
@@ -91,11 +98,19 @@ namespace lsp
             SWITCH("ce", "Clipper enable", "Clip on", 1.0f), \
             COMBO("cf", "Clipper sigmoid function", "Function", 2.0f, sigmoid_functions), \
             LOG_CONTROL("ct", "Clipper sigmoid threshold", "Thresh", U_GAIN_AMP, clipper::CLIP_THRESHOLD), \
+            CONTROL("dcoff", "Clipper DC offset", "DC offset", U_PERCENT, clipper::DCOFF), \
+            SWITCH("dcomp", "Clipper DC compensate", "DC compensate", 1.0f), \
             CONTROL("cp", "Clipper sigmoid pumping", "Pumping", U_DB, clipper::CLIP_PUMPING), \
-            MESH("cfc", "Clipper sigmoid function chart", 4, clipper::CURVE_MESH_POINTS)
+            MESH("cfc", "Clipper sigmoid function chart", 6, clipper::CURVE_MESH_POINTS), \
+            COMBO("gview", "Clipper graph view", "Graph view", 0, clipper_views), \
+            MESH("ctg", "Clipper time graph", 1 + 3*channels, clipper::TIME_MESH_POINTS + 4), \
+            MESH("wfg", "Clipper waveform graph", 1 + channels, clipper::TIME_MESH_POINTS + 4)
+
+        #define CLIPPER_COMMON_MONO \
+            CLIPPER_COMMON(1)
 
         #define CLIPPER_COMMON_STEREO \
-            CLIPPER_COMMON, \
+            CLIPPER_COMMON(2), \
             CONTROL_DFL("slink", "Stereo link", "Slink", U_PERCENT, clipper::STEREO_LINK, 50.0f)
 
         #define CLIPPER_METERS(id, label) \
@@ -105,10 +120,11 @@ namespace lsp
             METER_OUT_GAIN("odx" id, "Overdrive protection input meter" label, GAIN_AMP_P_36_DB), \
             METER_OUT_GAIN("ody" id, "Overdrive protection output meter" label, GAIN_AMP_P_36_DB), \
             METER_GAIN_DFL("odr" id, "Overdrive protection reduction level meter" label, GAIN_AMP_P_72_DB, GAIN_AMP_0_DB), \
-            METER_OUT_GAIN("cfx" id, "Clipping function input meter" label, GAIN_AMP_P_36_DB), \
-            METER_OUT_GAIN("cfy" id, "Clipping function output meter" label, GAIN_AMP_P_36_DB), \
-            METER_GAIN_DFL("cfr" id, "Clipping function reduction level meter" label, GAIN_AMP_P_72_DB, GAIN_AMP_0_DB), \
-            MESH("ctg" id, "Clipper time graph" label, 4, clipper::TIME_MESH_POINTS + 4)
+            METER_OUT_GAIN("cfx1" id, "Clipping function input meter 1" label, GAIN_AMP_P_36_DB), \
+            METER_OUT_GAIN("cfy1" id, "Clipping function output meter 1" label, GAIN_AMP_P_36_DB), \
+            METER_OUT_GAIN("cfx2" id, "Clipping function input meter 2" label, GAIN_AMP_P_36_DB), \
+            METER_OUT_GAIN("cfy2" id, "Clipping function output meter 2" label, GAIN_AMP_P_36_DB), \
+            METER_GAIN_DFL("cfr" id, "Clipping function reduction level meter" label, GAIN_AMP_P_72_DB, GAIN_AMP_0_DB)
 
         #define OSCILLOSCOPE_SWITCHES(id, label, alias) \
             SWITCH("ilg" id, "Input level graph enable" label, "Show In" alias, 1.0f), \
@@ -117,11 +133,10 @@ namespace lsp
 
         //-------------------------------------------------------------------------
         // Plugin metadata
-
         static const port_t clipper_mono_ports[] =
         {
             PORTS_MONO_PLUGIN,
-            CLIPPER_COMMON,
+            CLIPPER_COMMON_MONO,
             OSCILLOSCOPE_SWITCHES("", "", ""),
             CLIPPER_METERS("", ""),
 

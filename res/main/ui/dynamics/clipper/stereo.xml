@@ -11,6 +11,7 @@
 					<button id="op" ui:inject="Button_green" text="labels.odp"/>
 					<button id="ce" text="labels.signal.clipping" pad.l="8"/>
 					<button id="clog" text="labels.log_scale" ui:inject="Button_yellow"/>
+					<button id="dcomp" text="labels.signal.dc_compensate" ui:inject="Button_cyan"/>
 
 					<label text="labels.function" pad.l="8"/>
 				</ui:with>
@@ -121,7 +122,7 @@
 								<text x="-15 db" text="-15"/>
 								<text x="-18 db" text="graph.axis.in" halign="1"/>
 							</ui:with>
-							<text x=":th" y="-18 db" ox="2" text="graph.values.x:db:f" text:value=":th" text.eval="true" color=":op ? 'threshold' : 'graph_prim'" halign="(:th lt -6) ? 1 : -1" valign="1"/>
+							<text x=":th" y="6 db" ox="2" text="graph.values.x:db:f" text:value=":th" text.eval="true" color=":op ? 'threshold' : 'graph_prim'" halign="(:th lt -6) ? 1 : -1" valign="-1"/>
 						</graph>
 					</group>
 				</ui:with>
@@ -195,7 +196,7 @@
 						<vbox>
 							<!-- Clipper function graph linear -->
 							<graph width.min="265" height.min="215" expand="true" fill="true" visibility="!:clog">
-								<origin hpos="-0.8" vpos="-2.0/3.0" visible="false"/>
+								<origin hpos="-1" vpos="-1" visible="false"/>
 								<origin hpos="-1" vpos="0" visible="false"/>
 
 								<ui:with ox="0" oy="1">
@@ -221,15 +222,17 @@
 								</ui:with>
 
 								<!-- Axes and boundaries -->
-								<marker v="1" ox="1" oy="0" dv="1" dx=":_a_width * 0.6" dy=":_a_height" color="graph_alt_1" width="2" smooth="true"/>
-								<axis min="-0.25" max="2.25" color="graph_prim" angle="0.0" width="2"/>
-								<axis min="-0.25" max="1.25" color="graph_prim" angle="0.5" width="2"/>
-								<axis o="1" min="-0.25" max="2.25" color="graph_prim" angle="0.0" zero="-0.25" visibility="false"/>
+								<marker v="1" ox="1" oy="0" dv="1" dx=":_a_width / 2.25" dy=":_a_height / 1.25" color="graph_alt_1" width="2" smooth="true"/>
+								<axis min="0" max="2.25" color="graph_prim" angle="0.0" width="2"/>
+								<axis min="0" max="1.25" color="graph_prim" angle="0.5" width="2"/>
+								<axis o="1" min="0" max="2.25" color="graph_prim" angle="0.0" zero="0" visibility="false"/>
 
 								<!-- Meshes -->
 								<mesh id="cfc" x.index="0" y.index="1" width="3" color=":ce ? 'graph_mesh': 'graph_prim'" smooth="true"/>
-								<dot x.id="cfx_l" y.id="cfy_l" color="left" bcolor="left" visibility=":ce"/>
-								<dot x.id="cfx_r" y.id="cfy_r" color="right" bcolor="right" visibility=":ce"/>
+								<dot x.id="cfx1_l" y.id="cfy1_l" color="left" bcolor="left" visibility=":ce"/>
+								<dot x.id="cfx2_l" y.id="cfy2_l" color="left" bcolor="left" visibility=":ce"/>
+								<dot x.id="cfx1_r" y.id="cfy1_r" color="right" bcolor="right" visibility=":ce"/>
+								<dot x.id="cfx2_r" y.id="cfy2_r" color="right" bcolor="right" visibility=":ce"/>
 
 								<!-- Markers -->
 								<marker
@@ -276,12 +279,12 @@
 									hrcolor="graph_prim"/>
 
 								<!-- Text -->
-								<ui:with x="0" halign="-1" valign="-1">
+								<ui:with x="0" halign="1" valign="-1">
 									<text y="0.5" text="0.5"/>
 									<text y="1" text="1"/>
 									<text y="1.25" text="graph.axis.out" valign="-1"/>
 								</ui:with>
-								<ui:with y="0" halign="1" valign="-1">
+								<ui:with y="0" halign="1" valign="1">
 									<text x="0" text="0"/>
 									<text x="0.5" text="0.5"/>
 									<text x="1.0" text="1"/>
@@ -289,8 +292,7 @@
 									<text x="2.0" text="2"/>
 									<text x="2.25" text="graph.axis.in" halign="-1"/>
 								</ui:with>
-								<text x=":ct" y="1.25" text="graph.values.x::f" text:value=":ct" text.eval="true" color=":ce and :cf ine 0 ? 'threshold' : 'graph_prim'" halign="1" valign="-1"/>
-								<text x=":ct" y="-0.25" text="graph.values.x:db:f" text:value="20 * lg :ct" text.eval="true" color=":ce and :cf ine 0 ? 'threshold' : 'graph_prim'" halign="1" valign="1"/>
+								<text x=":ct" y="1.25" text="graph.values.x:db:f;x::f" text:value=":ct" text:db="20 * lg :ct" text.eval="true" color=":ce and :cf ine 0 ? 'threshold' : 'graph_prim'" halign="1" valign="-1" text.halign="-1" />
 							</graph>
 
 							<!-- Clipper function graph logarithmic -->
@@ -320,8 +322,10 @@
 
 								<!-- Meshes -->
 								<mesh id="cfc" x.index="2" y.index="3" width="3" color=":ce ? 'graph_mesh': 'graph_prim'" smooth="true"/>
-								<dot x.id="cfx_l" y.id="cfy_l" color="left" bcolor="left" visibility=":ce"/>
-								<dot x.id="cfx_r" y.id="cfy_r" color="right" bcolor="right" visibility=":ce"/>
+								<dot x.id="cfx1_l" y.id="cfy1_l" color="left" bcolor="left" visibility=":ce"/>
+								<dot x.id="cfx2_l" y.id="cfy2_l" color="left" bcolor="left" visibility=":ce"/>
+								<dot x.id="cfx1_r" y.id="cfy1_r" color="right" bcolor="right" visibility=":ce"/>
+								<dot x.id="cfx2_r" y.id="cfy2_r" color="right" bcolor="right" visibility=":ce"/>
 
 								<!-- Markers -->
 								<marker
@@ -386,8 +390,7 @@
 									<text x="-36 db" text="graph.axis.in" halign="1"/>
 								</ui:with>
 
-								<text x=":ct" y="12 db" text="graph.values.x::f" text:value=":ct" text.eval="true" color=":ce and :cf ine 0 ? 'threshold' : 'graph_prim'" halign="(:ct lt -12 db) ? 1 : -1" valign="-1"/>
-								<text x=":ct" y="-36 db" text="graph.values.x:db:f" text:value="20 * lg :ct" text.eval="true" color=":ce and :cf ine 0 ? 'threshold' : 'graph_prim'" halign="(:ct lt -12 db) ? 1 : -1" valign="1"/>
+								<text x=":ct" y="12 db" text="graph.values.x:db:f;x::f" text:value=":ct" text:db="20 * lg :ct" text.eval="true" color=":ce and :cf ine 0 ? 'threshold' : 'graph_prim'" halign="(:ct lt -12 db) ? 1 : -1" valign="-1" text.halign="(:ct lt -12 db) ? -1 : 1" />
 							</graph>
 						</vbox>
 					</group>
@@ -431,12 +434,21 @@
 			<ui:with bg.bright="!:ce ? :const_bg_darken : 1.0" bright="!:ce ? 0.75 : 1.0">
 				<hbox pad.v="4">
 					<void hexpand="true" hfill="true"/>
-					<!-- thres -->
+					<!-- thresh -->
 					<hbox fill="false" pad.l="6" pad.r="10">
 						<knob id="ct" scolor=":ce and :cf ine 0 ? 'threshold' : 'cycle_inactive'"/>
 						<vbox vfill="false" width="50" pad.l="4">
 							<label text="labels.thresh_old" halign="0"/>
 							<value id="ct" sline="true" halign="0"/>
+						</vbox>
+					</hbox>
+					
+					<!-- DC offset -->
+					<hbox fill="false" pad.r="6">
+						<knob id="dcoff" scolor=":ce ? 'kscale' : 'cycle_inactive'"/>
+						<vbox vfill="false" width="50" pad.l="4">
+							<label text="labels.signal.dc_offset" halign="-1"/>
+							<value id="dcoff" sline="true" halign="0"/>
 						</vbox>
 					</hbox>
 
@@ -542,7 +554,7 @@
 				<hsep pad.v="2" bg.color="bg" vreduce="true"/>
 
 				<!-- row 5 -->
-				<group ui:inject="GraphGroup" ipadding="0" hexpand="true" hfill="true" text="labels.graphs.time">
+				<cgroup id="gview" ui:inject="GraphGroup" ipadding="0" hexpand="true" hfill="true" text="labels.graphs.time">
 					<!-- Ocillogram graph -->
 					<graph width.min="312" height.min="192" hexpand="true" hfill="true">
 						<origin hpos="1" vpos="-1" visible="false"/>
@@ -570,16 +582,12 @@
 						</ui:with>
 
 						<!-- Meshes -->
-						<mesh id="ctg_l" width="0" x.index="0" y.index="1" color="left_in" fcolor="left_in" fcolor.a="0.8" fill="true" visibility=":ilg_l"/>
-						<mesh id="ctg_r" width="0" x.index="0" y.index="1" color="right_in" fcolor="right_in" fcolor.a="0.8" fill="true" visibility=":ilg_r"/>
-						<mesh id="ctg_l" width="2" x.index="0" y.index="2" color="left" visibility=":olg_l"/>
-						<mesh id="ctg_r" width="2" x.index="0" y.index="2" color="right" visibility=":olg_r"/>
-						<mesh id="ctg_l" width="2" x.index="0" y.index="3" color="bright_blue" visibility=":grg_l"/>
-						<mesh id="ctg_r" width="2" x.index="0" y.index="3" color="bright_blue" visibility=":grg_r"/>
-
-						<!-- Boundaries -->
-						<marker v="24 db" ox="1" oy="0" color="graph_prim" visibility="false"/>
-						<marker v="5" ox="0" oy="1" color="graph_prim" visibility="false"/>
+						<mesh id="ctg" width="0" x.index="0" y.index="1" color="left_in" fcolor="left_in" fcolor.a="0.8" fill="true" visibility=":ilg_l"/>
+						<mesh id="ctg" width="0" x.index="0" y.index="4" color="right_in" fcolor="right_in" fcolor.a="0.8" fill="true" visibility=":ilg_r"/>
+						<mesh id="ctg" width="2" x.index="0" y.index="2" color="left" visibility=":olg_l"/>
+						<mesh id="ctg" width="2" x.index="0" y.index="5" color="right" visibility=":olg_r"/>
+						<mesh id="ctg" width="2" x.index="0" y.index="3" color="bright_blue" visibility=":grg_l"/>
+						<mesh id="ctg" width="2" x.index="0" y.index="6" color="bright_blue" visibility=":grg_r"/>
 
 						<!-- Axis -->
 						<axis min="0" max="5" angle="1.0" log="false" color="graph_prim" visibility="false"/>
@@ -602,7 +610,63 @@
 							</ui:for>
 						</ui:with>
 					</graph>
-				</group>
+					
+					<!-- Waveform graph -->
+					<graph width.min="312" height.min="192" hexpand="true" hfill="true">
+						<origin hpos="1" vpos="0" visible="false"/>
+
+						<!-- Gray grid -->
+						<ui:with ox="0" oy="1">
+							<marker v="10" color="graph_alt_1"/>
+							<marker v="30" color="graph_alt_1"/>
+							<marker v="50" color="graph_alt_1"/>
+							<marker v="70" color="graph_alt_1"/>
+							<marker v="90" color="graph_alt_1"/>
+						</ui:with>
+
+						<!-- Yellow grid -->
+						<ui:with ox="0" oy="1">
+							<marker v="20" color="graph_sec"/>
+							<marker v="40" color="graph_sec"/>
+							<marker v="60" color="graph_sec"/>
+							<marker v="80" color="graph_sec"/>
+						</ui:with>
+						<ui:with ox="1" oy="0" color="graph_sec">
+							<ui:for id="v" first="-4" last="4" step="1">
+								<marker v="${:v * 0.25}"/>
+							</ui:for>
+						</ui:with>
+
+						<!-- Meshes -->
+						<mesh id="wfg" width="2" x.index="0" y.index="1" color="left" fcolor="left" fcolor.a="0.8" fill="true" visibility=":olg_l"/>
+						<mesh id="wfg" width="2" x.index="0" y.index="2" color="right" fcolor="right" fcolor.a="0.8" fill="true" visibility=":olg_r"/>
+
+						<!-- Axis -->
+						<axis min="0" max="100" angle="1.0" log="false" color="graph_prim" visibility="false"/>
+						<axis min="-1.25" max="1.25" angle="0.5" log="false" color="graph_prim" visibility="false"/>
+
+						<!-- Text -->
+						<ui:with y="-1.25" halign="1" valign="1" color="graph_prim">
+							<text x="0" text="0" halign="-1"/>
+							<text x="20" text="20"/>
+							<text x="40" text="40"/>
+							<text x="60" text="60"/>
+							<text x="80" text="80"/>
+							<text x="100" text="graph.units.ms"/>
+						</ui:with>
+						<ui:with x="100" halign="1" valign="1" color="graph_prim">
+							<text y="-1" text="-1" />
+							<text y="-0.75" text="-0.75" />
+							<text y="-0.5" text="-0.5" />
+							<text y="-0.25" text="-0.25" />
+							<text y="0" text="0" />
+							<text y="0.25" text="0.25" />
+							<text y="0.5" text="0.5" />
+							<text y="0.75" text="0.75" />
+							<text y="1.25" text="labels.amplitude" valign="-1"/>
+						</ui:with>
+					</graph>
+				</cgroup>
 
 				<ui:with bg.color="bg_schema">
 
