@@ -42,8 +42,9 @@ namespace lsp
             static constexpr float  CLIP_CURVE_X_MAX        = 2.25f;
             static constexpr size_t CURVE_MESH_POINTS       = 256;
             static constexpr size_t REFRESH_RATE            = 20;
-            static constexpr size_t TIME_MESH_POINTS        = 320;
+            static constexpr size_t TIME_MESH_POINTS        = 400;
             static constexpr float  TIME_HISTORY_MAX        = 5.0f;
+            static constexpr float  WAVEFORM_HISTORY_MAX    = 100.0f;
             static constexpr float  TIME_HISTORY_GAP        = 0.5f;
             static constexpr float  LUFS_MEASUREMENT_PERIOD = 400.0f;
             static constexpr float  LUFS_LIMITER_REACT      = 48.0f;

@@ -103,7 +103,8 @@ namespace lsp
             CONTROL("cp", "Clipper sigmoid pumping", "Pumping", U_DB, clipper::CLIP_PUMPING), \
             MESH("cfc", "Clipper sigmoid function chart", 6, clipper::CURVE_MESH_POINTS), \
             COMBO("gview", "Clipper graph view", "Graph view", 0, clipper_views), \
-            MESH("ctg", "Clipper time graph", 1 + 4*channels, clipper::TIME_MESH_POINTS + 4)
+            MESH("ctg", "Clipper time graph", 1 + 3*channels, clipper::TIME_MESH_POINTS + 4), \
+            MESH("wfg", "Clipper waveform graph", 1 + channels, clipper::TIME_MESH_POINTS + 4)
 
         #define CLIPPER_COMMON_MONO \
             CLIPPER_COMMON(1)

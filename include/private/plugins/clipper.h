@@ -126,6 +126,7 @@ namespace lsp
                     dspu::MeterGraph    sInGraph;           // Input meter graph
                     dspu::MeterGraph    sOutGraph;          // Output meter graph
                     dspu::MeterGraph    sRedGraph;          // Reduction meter graph
+                    dspu::MeterGraph    sWaveformGraph;     // Waveform meter graph
 
                     // Channel flags
                     uint32_t            nFlags;             // Channel flags
@@ -200,6 +201,7 @@ namespace lsp
                 float              *vLinSigmoid;        // Linear scale for sigmoid
                 float              *vLogSigmoid;        // Logarithmic scale for sigmoid
                 float              *vTime;              // Time graph
+                float              *vWaveformTime;      // Waveform graph
                 core::IDBuffer     *pIDisplay;          // Inline display buffer
 
                 plug::IPort        *pBypass;            // Bypass
@@ -211,7 +213,8 @@ namespace lsp
                 plug::IPort        *pBoosting;          // Boosting mode
                 plug::IPort        *pStereoLink;        // Stereo linking for output clipper
                 plug::IPort        *pDithering;         // Dithering mode
-                plug::IPort        *pTimeMesh;          // Input, output, gain reduction and oscillogram graph mesh
+                plug::IPort        *pTimeMesh;          // Input, output, gain reduction graph mesh
+                plug::IPort        *pWaveformMesh;      // Waveform graph mesh
 
                 uint8_t            *pData;              // Allocated data
 

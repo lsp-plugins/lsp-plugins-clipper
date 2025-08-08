@@ -572,19 +572,19 @@
 
 						<!-- Gray grid -->
 						<ui:with ox="0" oy="1">
-							<marker v="0.5" color="graph_alt_1"/>
-							<marker v="1.5" color="graph_alt_1"/>
-							<marker v="2.5" color="graph_alt_1"/>
-							<marker v="3.5" color="graph_alt_1"/>
-							<marker v="4.5" color="graph_alt_1"/>
+							<marker v="10" color="graph_alt_1"/>
+							<marker v="30" color="graph_alt_1"/>
+							<marker v="50" color="graph_alt_1"/>
+							<marker v="70" color="graph_alt_1"/>
+							<marker v="90" color="graph_alt_1"/>
 						</ui:with>
 
 						<!-- Yellow grid -->
 						<ui:with ox="0" oy="1">
-							<marker v="1" color="graph_sec"/>
-							<marker v="2" color="graph_sec"/>
-							<marker v="3" color="graph_sec"/>
-							<marker v="4" color="graph_sec"/>
+							<marker v="20" color="graph_sec"/>
+							<marker v="40" color="graph_sec"/>
+							<marker v="60" color="graph_sec"/>
+							<marker v="80" color="graph_sec"/>
 						</ui:with>
 						<ui:with ox="1" oy="0" color="graph_sec">
 							<ui:for id="v" first="-4" last="4" step="1">
@@ -593,22 +593,22 @@
 						</ui:with>
 
 						<!-- Meshes -->
-						<mesh id="ctg" width="0" x.index="0" y.index="4" color="mono" fcolor="mono" fcolor.a="0.8" fill="true" visibility=":olg"/>
+						<mesh id="wfg" width="2" x.index="0" y.index="1" color="mono" fcolor="mono" fcolor.a="0.8" fill="true" visibility=":olg"/>
 
 						<!-- Axis -->
-						<axis min="0" max="5" angle="1.0" log="false" color="graph_prim" visibility="false"/>
+						<axis min="0" max="100" angle="1.0" log="false" color="graph_prim" visibility="false"/>
 						<axis min="-1.25" max="1.25" angle="0.5" log="false" color="graph_prim" visibility="false"/>
 
 						<!-- Text -->
 						<ui:with y="-1.25" halign="1" valign="1" color="graph_prim">
 							<text x="0" text="0" halign="-1"/>
-							<text x="1" text="1"/>
-							<text x="2" text="2"/>
-							<text x="3" text="3"/>
-							<text x="4" text="4"/>
-							<text x="5" text="graph.units.s"/>
+							<text x="20" text="20"/>
+							<text x="40" text="40"/>
+							<text x="60" text="60"/>
+							<text x="80" text="80"/>
+							<text x="100" text="graph.units.ms"/>
 						</ui:with>
-						<ui:with x="5" halign="1" valign="1" color="graph_prim">
+						<ui:with x="100" halign="1" valign="1" color="graph_prim">
 							<text y="-1" text="-1" />
 							<text y="-0.75" text="-0.75" />
 							<text y="-0.5" text="-0.5" />

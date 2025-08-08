@@ -132,6 +132,7 @@ namespace lsp
             vLinSigmoid             = NULL;
             vLogSigmoid             = NULL;
             vTime                   = NULL;
+            vWaveformTime           = NULL;
             pIDisplay               = NULL;
 
             pBypass                 = NULL;
@@ -144,6 +145,7 @@ namespace lsp
             pStereoLink             = NULL;
             pDithering              = NULL;
             pTimeMesh               = NULL;
+            pWaveformMesh           = NULL;
 
             pData                   = NULL;
         }
@@ -176,6 +178,7 @@ namespace lsp
                     c->sInGraph.destroy();
                     c->sOutGraph.destroy();
                     c->sRedGraph.destroy();
+                    c->sWaveformGraph.destroy();
                 }
                 vChannels   = NULL;
             }
@@ -211,6 +214,7 @@ namespace lsp
                 szof_curve_buffer +     // vLinSigmoid
                 szof_curve_buffer +     // vLogSigmoid
                 szof_time_buffer +      // vTime
+                szof_time_buffer +      // vWaveformTime
                 nChannels * (
                     szof_buffer +       // vInMeter
                     szof_buffer +       // vRedMeter
@@ -272,6 +276,7 @@ namespace lsp
             vLinSigmoid             = advance_ptr_bytes<float>(ptr, szof_curve_buffer);
             vLogSigmoid             = advance_ptr_bytes<float>(ptr, szof_curve_buffer);
             vTime                   = advance_ptr_bytes<float>(ptr, szof_time_buffer);
+            vWaveformTime           = advance_ptr_bytes<float>(ptr, szof_time_buffer);
 
             for (size_t i=0; i < nChannels; ++i)
             {
@@ -287,9 +292,11 @@ namespace lsp
                 c->sInGraph.construct();
                 c->sOutGraph.construct();
                 c->sRedGraph.construct();
+                c->sWaveformGraph.construct();
                 c->sInGraph.set_method(dspu::MM_ABS_MAXIMUM);
                 c->sOutGraph.set_method(dspu::MM_ABS_MAXIMUM);
                 c->sRedGraph.set_method(dspu::MM_ABS_MINIMUM);
+                c->sWaveformGraph.set_method(dspu::MM_SIGN_MAXIMUM);
 
                 c->sDither.init();
 
@@ -385,6 +392,7 @@ namespace lsp
             BIND_PORT(sClip.pCurveMesh);
             SKIP_PORT("Clipper graph view");
             BIND_PORT(pTimeMesh);
+            BIND_PORT(pWaveformMesh);
             if (nChannels > 1)
                 BIND_PORT(pStereoLink);
 
@@ -435,6 +443,10 @@ namespace lsp
             delta       = meta::clipper::TIME_HISTORY_MAX / (meta::clipper::TIME_MESH_POINTS - 1);
             for (size_t i=0; i<meta::clipper::TIME_MESH_POINTS; ++i)
                 vTime[i]    = meta::clipper::TIME_HISTORY_MAX - i*delta;
+
+            delta       = meta::clipper::WAVEFORM_HISTORY_MAX / (meta::clipper::TIME_MESH_POINTS - 1);
+            for (size_t i=0; i<meta::clipper::TIME_MESH_POINTS; ++i)
+                vWaveformTime[i]    = meta::clipper::WAVEFORM_HISTORY_MAX - i*delta;
         }
 
         void clipper::update_sample_rate(long sr)
@@ -442,6 +454,8 @@ namespace lsp
             const size_t max_odp_delay      = dspu::millis_to_samples(sr, meta::clipper::ODP_REACT_MAX) * 0.5f;
             const size_t samples_per_dot    = dspu::seconds_to_samples(
                 sr, meta::clipper::TIME_HISTORY_MAX / meta::clipper::TIME_MESH_POINTS);
+            const size_t wf_samples_per_dot    = dspu::millis_to_samples(
+                sr, meta::clipper::WAVEFORM_HISTORY_MAX / meta::clipper::TIME_MESH_POINTS);
 
             sInMeter.set_sample_rate(sr);
             sOutMeter.set_sample_rate(sr);
@@ -460,6 +474,7 @@ namespace lsp
                 c->sInGraph.init(meta::clipper::TIME_MESH_POINTS, samples_per_dot);
                 c->sOutGraph.init(meta::clipper::TIME_MESH_POINTS, samples_per_dot);
                 c->sRedGraph.init(meta::clipper::TIME_MESH_POINTS, samples_per_dot);
+                c->sWaveformGraph.init(meta::clipper::TIME_MESH_POINTS, wf_samples_per_dot);
             }
         }
 
@@ -813,6 +828,7 @@ namespace lsp
             c->sInGraph.process(c->vInMeter, samples);
             c->sOutGraph.process(c->vData, samples);
             c->sRedGraph.process(c->vRedMeter, samples);
+            c->sWaveformGraph.process(c->vData, samples);
 
             // Update momentary values
             const float in          = dsp::max(c->vInMeter, samples);
@@ -1067,12 +1083,10 @@ namespace lsp
                     float *in       = mesh->pvData[index++];
                     float *out      = mesh->pvData[index++];
                     float *red      = mesh->pvData[index++];
-                    float *osc      = mesh->pvData[index++];
 
                     dsp::copy(&in[2], c->sInGraph.data(), meta::clipper::TIME_MESH_POINTS);
                     dsp::copy(&out[2], c->sOutGraph.data(), meta::clipper::TIME_MESH_POINTS);
                     dsp::copy(&red[2], c->sRedGraph.data(), meta::clipper::TIME_MESH_POINTS);
-                    dsp::fill_zero(&osc[2], meta::clipper::TIME_MESH_POINTS); // TODO
 
                     // Generate extra points
                     in[0]           = 0.0f;
@@ -1081,13 +1095,10 @@ namespace lsp
                     out[1]          = out[2];
                     red[0]          = red[2];
                     red[1]          = red[2];
-                    osc[0]          = 0.0f;
-                    osc[1]          = osc[2];
 
                     in             += meta::clipper::TIME_MESH_POINTS + 2;
                     out            += meta::clipper::TIME_MESH_POINTS + 2;
                     red            += meta::clipper::TIME_MESH_POINTS + 2;
-                    osc            += meta::clipper::TIME_MESH_POINTS + 2;
 
                     in[0]           = in[-1];
                     in[1]           = 0.0f;
@@ -1095,6 +1106,40 @@ namespace lsp
                     out[1]          = out[-1];
                     red[0]          = red[-1];
                     red[1]          = red[-1];
+                }
+
+                // Notify mesh contains data
+                mesh->data(index, meta::clipper::TIME_MESH_POINTS + 4);
+            }
+
+            // Output oscilloscope graphs for output clipper
+            mesh            = pWaveformMesh->buffer<plug::mesh_t>();
+            if ((mesh != NULL) && (mesh->isEmpty()))
+            {
+                size_t index    = 0;
+                float *t        = mesh->pvData[index++];
+
+                dsp::copy(&t[2], vWaveformTime, meta::clipper::TIME_MESH_POINTS);
+                t[0]            = t[2] + meta::clipper::TIME_HISTORY_GAP;
+                t[1]            = t[0];
+                t              += meta::clipper::TIME_MESH_POINTS + 2;
+                t[0]            = t[-1] - meta::clipper::TIME_HISTORY_GAP;
+                t[1]            = t[0];
+
+                // Output data for each channel
+                for (size_t i=0; i<nChannels; ++i)
+                {
+                    channel_t *c    = &vChannels[i];
+
+                    // Fill time values
+                    float *osc      = mesh->pvData[index++];
+
+                    dsp::copy(&osc[2], c->sWaveformGraph.data(), meta::clipper::TIME_MESH_POINTS);
+
+                    // Generate extra points
+                    osc[0]          = 0.0f;
+                    osc[1]          = osc[2];
+                    osc            += meta::clipper::TIME_MESH_POINTS + 2;
                     osc[0]          = osc[-1];
                     osc[1]          = 0.0f;
                 }
@@ -1453,6 +1498,7 @@ namespace lsp
             v->write("vLinSigmoid", vLinSigmoid);
             v->write("vLogSigmoid", vLogSigmoid);
             v->write("vTime", vTime);
+            v->write("vWaveformTime", vWaveformTime);
             v->write("pIDisplay", pIDisplay);
 
             v->write("pBypass", pBypass);
