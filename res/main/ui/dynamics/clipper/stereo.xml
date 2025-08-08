@@ -554,7 +554,7 @@
 				<hsep pad.v="2" bg.color="bg" vreduce="true"/>
 
 				<!-- row 5 -->
-				<group ui:inject="GraphGroup" ipadding="0" hexpand="true" hfill="true" text="labels.graphs.time">
+				<cgroup id="gview" ui:inject="GraphGroup" ipadding="0" hexpand="true" hfill="true" text="labels.graphs.time">
 					<!-- Ocillogram graph -->
 					<graph width.min="312" height.min="192" hexpand="true" hfill="true">
 						<origin hpos="1" vpos="-1" visible="false"/>
@@ -582,16 +582,12 @@
 						</ui:with>
 
 						<!-- Meshes -->
-						<mesh id="ctg_l" width="0" x.index="0" y.index="1" color="left_in" fcolor="left_in" fcolor.a="0.8" fill="true" visibility=":ilg_l"/>
-						<mesh id="ctg_r" width="0" x.index="0" y.index="1" color="right_in" fcolor="right_in" fcolor.a="0.8" fill="true" visibility=":ilg_r"/>
-						<mesh id="ctg_l" width="2" x.index="0" y.index="2" color="left" visibility=":olg_l"/>
-						<mesh id="ctg_r" width="2" x.index="0" y.index="2" color="right" visibility=":olg_r"/>
-						<mesh id="ctg_l" width="2" x.index="0" y.index="3" color="bright_blue" visibility=":grg_l"/>
-						<mesh id="ctg_r" width="2" x.index="0" y.index="3" color="bright_blue" visibility=":grg_r"/>
-
-						<!-- Boundaries -->
-						<marker v="24 db" ox="1" oy="0" color="graph_prim" visibility="false"/>
-						<marker v="5" ox="0" oy="1" color="graph_prim" visibility="false"/>
+						<mesh id="ctg" width="0" x.index="0" y.index="1" color="left_in" fcolor="left_in" fcolor.a="0.8" fill="true" visibility=":ilg_l"/>
+						<mesh id="ctg" width="0" x.index="0" y.index="5" color="right_in" fcolor="right_in" fcolor.a="0.8" fill="true" visibility=":ilg_r"/>
+						<mesh id="ctg" width="2" x.index="0" y.index="2" color="left" visibility=":olg_l"/>
+						<mesh id="ctg" width="2" x.index="0" y.index="6" color="right" visibility=":olg_r"/>
+						<mesh id="ctg" width="2" x.index="0" y.index="3" color="bright_blue" visibility=":grg_l"/>
+						<mesh id="ctg" width="2" x.index="0" y.index="7" color="bright_blue" visibility=":grg_r"/>
 
 						<!-- Axis -->
 						<axis min="0" max="5" angle="1.0" log="false" color="graph_prim" visibility="false"/>
@@ -614,7 +610,63 @@
 							</ui:for>
 						</ui:with>
 					</graph>
-				</group>
+					
+					<!-- Waveform graph -->
+					<graph width.min="312" height.min="192" hexpand="true" hfill="true">
+						<origin hpos="1" vpos="0" visible="false"/>
+
+						<!-- Gray grid -->
+						<ui:with ox="0" oy="1">
+							<marker v="0.5" color="graph_alt_1"/>
+							<marker v="1.5" color="graph_alt_1"/>
+							<marker v="2.5" color="graph_alt_1"/>
+							<marker v="3.5" color="graph_alt_1"/>
+							<marker v="4.5" color="graph_alt_1"/>
+						</ui:with>
+
+						<!-- Yellow grid -->
+						<ui:with ox="0" oy="1">
+							<marker v="1" color="graph_sec"/>
+							<marker v="2" color="graph_sec"/>
+							<marker v="3" color="graph_sec"/>
+							<marker v="4" color="graph_sec"/>
+						</ui:with>
+						<ui:with ox="1" oy="0" color="graph_sec">
+							<ui:for id="v" first="-4" last="4" step="1">
+								<marker v="${:v * 0.25}"/>
+							</ui:for>
+						</ui:with>
+
+						<!-- Meshes -->
+						<mesh id="ctg" width="0" x.index="0" y.index="4" color="left" fcolor="left" fcolor.a="0.8" fill="true" visibility=":olg_l"/>
+						<mesh id="ctg" width="0" x.index="0" y.index="9" color="right" fcolor="right" fcolor.a="0.8" fill="true" visibility=":olg_r"/>
+
+						<!-- Axis -->
+						<axis min="0" max="5" angle="1.0" log="false" color="graph_prim" visibility="false"/>
+						<axis min="-1.25" max="1.25" angle="0.5" log="false" color="graph_prim" visibility="false"/>
+
+						<!-- Text -->
+						<ui:with y="-1.25" halign="1" valign="1" color="graph_prim">
+							<text x="0" text="0" halign="-1"/>
+							<text x="1" text="1"/>
+							<text x="2" text="2"/>
+							<text x="3" text="3"/>
+							<text x="4" text="4"/>
+							<text x="5" text="graph.units.s"/>
+						</ui:with>
+						<ui:with x="5" halign="1" valign="1" color="graph_prim">
+							<text y="-1" text="-1" />
+							<text y="-0.75" text="-0.75" />
+							<text y="-0.5" text="-0.5" />
+							<text y="-0.25" text="-0.25" />
+							<text y="0" text="0" />
+							<text y="0.25" text="0.25" />
+							<text y="0.5" text="0.5" />
+							<text y="0.75" text="0.75" />
+							<text y="1.25" text="labels.amplitude" valign="-1"/>
+						</ui:with>
+					</graph>
+				</cgroup>
 
 				<ui:with bg.color="bg_schema">
 

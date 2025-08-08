@@ -171,8 +171,6 @@ namespace lsp
                     plug::IPort        *pClipIn[2];         // Clipping input level meter
                     plug::IPort        *pClipOut[2];        // Clipping output level meter
                     plug::IPort        *pClipRed;           // Clipping reduction level meter
-
-                    plug::IPort        *pTimeMesh;          // Input, output and gain reduction graph mesh
                 } channel_t;
 
             protected:
@@ -213,6 +211,7 @@ namespace lsp
                 plug::IPort        *pBoosting;          // Boosting mode
                 plug::IPort        *pStereoLink;        // Stereo linking for output clipper
                 plug::IPort        *pDithering;         // Dithering mode
+                plug::IPort        *pTimeMesh;          // Input, output, gain reduction and oscillogram graph mesh
 
                 uint8_t            *pData;              // Allocated data
 

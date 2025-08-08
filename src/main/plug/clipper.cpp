@@ -143,6 +143,7 @@ namespace lsp
             pBoosting               = NULL;
             pStereoLink             = NULL;
             pDithering              = NULL;
+            pTimeMesh               = NULL;
 
             pData                   = NULL;
         }
@@ -336,8 +337,6 @@ namespace lsp
                 c->pClipOut[0]          = NULL;
                 c->pClipOut[1]          = NULL;
                 c->pClipRed             = NULL;
-
-                c->pTimeMesh            = NULL;
             }
 
             lsp_assert( ptr <= tail );
@@ -384,6 +383,8 @@ namespace lsp
             BIND_PORT(sClip.pDCCompensate);
             BIND_PORT(sClip.pPumping);
             BIND_PORT(sClip.pCurveMesh);
+            SKIP_PORT("Clipper graph view");
+            BIND_PORT(pTimeMesh);
             if (nChannels > 1)
                 BIND_PORT(pStereoLink);
 
@@ -416,8 +417,6 @@ namespace lsp
                 BIND_PORT(c->pClipIn[1]);
                 BIND_PORT(c->pClipOut[1]);
                 BIND_PORT(c->pClipRed);
-
-                BIND_PORT(c->pTimeMesh);
             }
 
             // Initialize horizontal axis values for each curve
@@ -1045,53 +1044,63 @@ namespace lsp
                 }
             }
 
-            // Output data for each channel
-            for (size_t i=0; i<nChannels; ++i)
+            // Output oscilloscope graphs for output clipper
+            mesh            = pTimeMesh->buffer<plug::mesh_t>();
+            if ((mesh != NULL) && (mesh->isEmpty()))
             {
-                channel_t *c        = &vChannels[i];
+                size_t index    = 0;
+                float *t        = mesh->pvData[index++];
 
-                // Output oscilloscope graphs for output clipper
-                plug::mesh_t *mesh    = c->pTimeMesh->buffer<plug::mesh_t>();
-                if ((mesh != NULL) && (mesh->isEmpty()))
+                dsp::copy(&t[2], vTime, meta::clipper::TIME_MESH_POINTS);
+                t[0]            = t[2] + meta::clipper::TIME_HISTORY_GAP;
+                t[1]            = t[0];
+                t              += meta::clipper::TIME_MESH_POINTS + 2;
+                t[0]            = t[-1] - meta::clipper::TIME_HISTORY_GAP;
+                t[1]            = t[0];
+
+                // Output data for each channel
+                for (size_t i=0; i<nChannels; ++i)
                 {
-                    // Fill time values
-                    float *t        = mesh->pvData[0];
-                    float *in       = mesh->pvData[1];
-                    float *out      = mesh->pvData[2];
-                    float *red      = mesh->pvData[3];
+                    channel_t *c    = &vChannels[i];
 
-                    dsp::copy(&t[2], vTime, meta::clipper::TIME_MESH_POINTS);
+                    // Fill time values
+                    float *in       = mesh->pvData[index++];
+                    float *out      = mesh->pvData[index++];
+                    float *red      = mesh->pvData[index++];
+                    float *osc      = mesh->pvData[index++];
+
                     dsp::copy(&in[2], c->sInGraph.data(), meta::clipper::TIME_MESH_POINTS);
                     dsp::copy(&out[2], c->sOutGraph.data(), meta::clipper::TIME_MESH_POINTS);
                     dsp::copy(&red[2], c->sRedGraph.data(), meta::clipper::TIME_MESH_POINTS);
+                    dsp::fill_zero(&osc[2], meta::clipper::TIME_MESH_POINTS); // TODO
 
                     // Generate extra points
-                    t[0]            = t[2] + meta::clipper::TIME_HISTORY_GAP;
-                    t[1]            = t[0];
                     in[0]           = 0.0f;
                     in[1]           = in[2];
                     out[0]          = out[2];
                     out[1]          = out[2];
                     red[0]          = red[2];
                     red[1]          = red[2];
+                    osc[0]          = 0.0f;
+                    osc[1]          = osc[2];
 
-                    t              += meta::clipper::TIME_MESH_POINTS + 2;
                     in             += meta::clipper::TIME_MESH_POINTS + 2;
                     out            += meta::clipper::TIME_MESH_POINTS + 2;
                     red            += meta::clipper::TIME_MESH_POINTS + 2;
+                    osc            += meta::clipper::TIME_MESH_POINTS + 2;
 
-                    t[0]            = t[-1] - meta::clipper::TIME_HISTORY_GAP;
-                    t[1]            = t[0];
                     in[0]           = in[-1];
                     in[1]           = 0.0f;
                     out[0]          = out[-1];
                     out[1]          = out[-1];
                     red[0]          = red[-1];
                     red[1]          = red[-1];
-
-                    // Notify mesh contains data
-                    mesh->data(4, meta::clipper::TIME_MESH_POINTS + 4);
+                    osc[0]          = osc[-1];
+                    osc[1]          = 0.0f;
                 }
+
+                // Notify mesh contains data
+                mesh->data(index, meta::clipper::TIME_MESH_POINTS + 4);
             }
         }
 
@@ -1355,8 +1364,6 @@ namespace lsp
                         v->writev("pClipIn", c->pClipIn, 2);
                         v->writev("pClipOut", c->pClipOut, 2);
                         v->write("pClipRed", c->pClipRed);
-
-                        v->write("pTimeMesh", c->pTimeMesh);
                     }
                     v->end_object();
                 }
@@ -1457,6 +1464,7 @@ namespace lsp
             v->write("pBoosting", pBoosting);
             v->write("pStereoLink", pStereoLink);
             v->write("pDithering", pDithering);
+            v->write("pTimeMesh", pTimeMesh);
 
             v->write("pData", pData);
         }
