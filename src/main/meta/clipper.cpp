@@ -71,6 +71,7 @@ namespace lsp
 
         static port_item_t clipper_views[] =
         {
+            { "Combined",           "clipper.view.combined"                 },
             { "Dynamics",           "clipper.view.dynamics"                 },
             { "Waveform",           "clipper.view.waveform"                 },
             { NULL, NULL }

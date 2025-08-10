@@ -454,7 +454,7 @@ namespace lsp
             const size_t max_odp_delay      = dspu::millis_to_samples(sr, meta::clipper::ODP_REACT_MAX) * 0.5f;
             const size_t samples_per_dot    = dspu::seconds_to_samples(
                 sr, meta::clipper::TIME_HISTORY_MAX / meta::clipper::TIME_MESH_POINTS);
-            const size_t wf_samples_per_dot    = dspu::millis_to_samples(
+            const size_t wf_samples_per_dot    = dspu::seconds_to_samples(
                 sr, meta::clipper::WAVEFORM_HISTORY_MAX / meta::clipper::TIME_MESH_POINTS);
 
             sInMeter.set_sample_rate(sr);

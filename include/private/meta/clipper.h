@@ -44,7 +44,7 @@ namespace lsp
             static constexpr size_t REFRESH_RATE            = 20;
             static constexpr size_t TIME_MESH_POINTS        = 400;
             static constexpr float  TIME_HISTORY_MAX        = 5.0f;
-            static constexpr float  WAVEFORM_HISTORY_MAX    = 100.0f;
+            static constexpr float  WAVEFORM_HISTORY_MAX    = 1.0f;
             static constexpr float  TIME_HISTORY_GAP        = 0.5f;
             static constexpr float  LUFS_MEASUREMENT_PERIOD = 400.0f;
             static constexpr float  LUFS_LIMITER_REACT      = 48.0f;

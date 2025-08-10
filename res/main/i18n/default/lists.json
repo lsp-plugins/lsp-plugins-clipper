@@ -1,6 +1,7 @@
 {
 	"clipper": {
-		"view": {
+		"view": {		
+			"combined": "Combined",
 			"dynamics": "Dynamics",
 			"waveform": "Waveform"
 		}
