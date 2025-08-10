@@ -296,7 +296,7 @@ namespace lsp
                 c->sInGraph.set_method(dspu::MM_ABS_MAXIMUM);
                 c->sOutGraph.set_method(dspu::MM_ABS_MAXIMUM);
                 c->sRedGraph.set_method(dspu::MM_ABS_MINIMUM);
-                c->sWaveformGraph.set_method(dspu::MM_VAR_MINMAX);
+                c->sWaveformGraph.set_method(dspu::MM_PEAK);
 
                 c->sDither.init();
 
