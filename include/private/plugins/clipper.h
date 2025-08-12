@@ -125,8 +125,8 @@ namespace lsp
                     dspu::Dither        sDither;            // Dither
                     dspu::MeterGraph    sInGraph;           // Input meter graph
                     dspu::MeterGraph    sOutGraph;          // Output meter graph
-                    dspu::MeterGraph    sRedGraph;          // Reduction meter graph
                     dspu::MeterGraph    sWaveformGraph;     // Waveform meter graph
+                    dspu::MeterGraph    sRedGraph;          // Reduction meter graph
 
                     // Channel flags
                     uint32_t            nFlags;             // Channel flags
@@ -148,7 +148,6 @@ namespace lsp
                     float              *vIn;                // Input buffer
                     float              *vOut;               // Output buffer
                     float              *vInMeter;           // Input data metering
-                    float              *vRedMeter;          // Reduction metering
                     float              *vData;              // Data buffer
                     float              *vSc;                // Sidechain buffer
 

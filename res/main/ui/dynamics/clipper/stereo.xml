@@ -10,8 +10,8 @@
 					<void hexpand="true"/>
 					<button id="op" ui:inject="Button_green" text="labels.odp"/>
 					<button id="ce" text="labels.signal.clipping" pad.l="8"/>
-					<button id="clog" text="labels.log_scale" ui:inject="Button_yellow"/>
 					<button id="dcomp" text="labels.signal.dc_compensate" ui:inject="Button_cyan"/>
+					<button id="clog" text="labels.log_scale" ui:inject="Button_yellow"/>
 
 					<label text="labels.function" pad.l="8"/>
 				</ui:with>

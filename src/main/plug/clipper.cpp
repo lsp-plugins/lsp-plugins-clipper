@@ -177,8 +177,8 @@ namespace lsp
                     c->sDither.destroy();
                     c->sInGraph.destroy();
                     c->sOutGraph.destroy();
-                    c->sRedGraph.destroy();
                     c->sWaveformGraph.destroy();
+                    c->sRedGraph.destroy();
                 }
                 vChannels   = NULL;
             }
@@ -217,7 +217,6 @@ namespace lsp
                 szof_time_buffer +      // vWaveformTime
                 nChannels * (
                     szof_buffer +       // vInMeter
-                    szof_buffer +       // vRedMeter
                     szof_buffer +       // vData
                     szof_buffer         // vSc
                 );
@@ -291,12 +290,12 @@ namespace lsp
 
                 c->sInGraph.construct();
                 c->sOutGraph.construct();
-                c->sRedGraph.construct();
                 c->sWaveformGraph.construct();
+                c->sRedGraph.construct();
                 c->sInGraph.set_method(dspu::MM_ABS_MAXIMUM);
                 c->sOutGraph.set_method(dspu::MM_ABS_MAXIMUM);
-                c->sRedGraph.set_method(dspu::MM_ABS_MINIMUM);
                 c->sWaveformGraph.set_method(dspu::MM_PEAK);
+                c->sRedGraph.set_method(dspu::MM_ABS_MINIMUM);
 
                 c->sDither.init();
 
@@ -319,7 +318,6 @@ namespace lsp
                 c->vIn                  = NULL;
                 c->vOut                 = NULL;
                 c->vInMeter             = advance_ptr_bytes<float>(ptr, szof_buffer);
-                c->vRedMeter            = advance_ptr_bytes<float>(ptr, szof_buffer);
                 c->vData                = advance_ptr_bytes<float>(ptr, szof_buffer);
                 c->vSc                  = advance_ptr_bytes<float>(ptr, szof_buffer);
 
@@ -473,8 +471,8 @@ namespace lsp
                 c->sSc.set_sample_rate(sr);
                 c->sInGraph.init(meta::clipper::TIME_MESH_POINTS, samples_per_dot);
                 c->sOutGraph.init(meta::clipper::TIME_MESH_POINTS, samples_per_dot);
-                c->sRedGraph.init(meta::clipper::TIME_MESH_POINTS, samples_per_dot);
                 c->sWaveformGraph.init(meta::clipper::TIME_MESH_POINTS, wf_samples_per_dot);
+                c->sRedGraph.init(meta::clipper::TIME_MESH_POINTS, samples_per_dot);
             }
         }
 
@@ -822,18 +820,18 @@ namespace lsp
         {
             // Compute reduction buffer
             for (size_t i=0; i<samples; ++i)
-                c->vRedMeter[i]         = (c->vInMeter[i] >= GAIN_AMP_M_120_DB) ? fabsf(c->vData[i]) / c->vInMeter[i] : GAIN_AMP_0_DB;
+                vBuffer[i]              = (c->vInMeter[i] >= GAIN_AMP_M_120_DB) ? fabsf(c->vData[i]) / c->vInMeter[i] : GAIN_AMP_0_DB;
 
             // Update graphs
             c->sInGraph.process(c->vInMeter, samples);
             c->sOutGraph.process(c->vData, samples);
-            c->sRedGraph.process(c->vRedMeter, samples);
             c->sWaveformGraph.process(c->vData, samples);
+            c->sRedGraph.process(vBuffer, samples);
 
             // Update momentary values
             const float in          = dsp::max(c->vInMeter, samples);
             const float out         = dsp::abs_max(c->vData, samples);
-            const float red         = dsp::min(c->vRedMeter, samples);
+            const float red         = dsp::min(vBuffer, samples);
 
             c->fIn                  = lsp_max(c->fIn, in);
             c->fOut                 = lsp_max(c->fOut, out);
@@ -1368,7 +1366,8 @@ namespace lsp
                         v->write_object("sDither", &c->sDither);
                         v->write_object("sInGraph", &c->sInGraph);
                         v->write_object("sOutGraph", &c->sOutGraph);
-                        v->write_object("sRedGraph", &c->sOutGraph);
+                        v->write_object("sWaveformGraph", &c->sWaveformGraph);
+                        v->write_object("sRedGraph", &c->sRedGraph);
 
                         v->write("nFlags", c->nFlags);
 
@@ -1387,7 +1386,6 @@ namespace lsp
                         v->write("vIn", c->vIn);
                         v->write("vOut", c->vOut);
                         v->write("vInMeter", c->vInMeter);
-                        v->write("vRedMeter", c->vRedMeter);
                         v->write("vData", c->vData);
                         v->write("vSc", c->vSc);
 
