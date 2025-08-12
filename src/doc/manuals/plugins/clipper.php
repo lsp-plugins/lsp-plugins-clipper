@@ -21,8 +21,8 @@
 	<li><b>Dither</b> - allows to enable dithering noise depending on the bitness of the desired output signal.</li>
 	<li><b>ODP</b> - enabled overdrive protection compressor.</li>
 	<li><b>Clipping</b> - enables clipping function applied to the signal.</li>
-	<li><b>Log Scale</b> - switches clipping function graph representation in linear/logarithmic scale.</li>
 	<li><b>DC Compensate</b> - enables compensation of the DC offset applied at the clipping stage.</li>
+	<li><b>Log Scale</b> - switches clipping function graph representation in linear/logarithmic scale.</li>
 	<li><b>Function</b> - clipping function</li>
 	<li><b>ODP Thresh</b> - the threshold of the overdrive protection compressor.</li>
 	<li><b>ODP Knee</b> - the knee of the overdrive protection compressor.</li>
