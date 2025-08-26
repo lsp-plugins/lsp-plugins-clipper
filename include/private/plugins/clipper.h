@@ -50,8 +50,9 @@ namespace lsp
                     CF_LUFS_LIMITER     = 1 << 1,           // Enable LUFS limiter
                     CF_CLIP_ENABLED     = 1 << 2,           // Output clipper enabled
                     CF_ODP_ENABLED      = 1 << 3,           // Overdrive protection enabled
-                    CF_SYNC_ODP         = 1 << 4,           // Sync overdrive protection curve
-                    CF_SYNC_CLIP        = 1 << 5,           // Sync sigmoid clipping curve
+                    CF_DC_COMPENSATE    = 1 << 4,           // Compensate DC offset
+                    CF_SYNC_ODP         = 1 << 5,           // Sync overdrive protection curve
+                    CF_SYNC_CLIP        = 1 << 6,           // Sync sigmoid clipping curve
 
                     CF_SYNC_ALL         = CF_SYNC_ODP | CF_SYNC_CLIP
                 };
@@ -87,6 +88,7 @@ namespace lsp
                 {
                     dspu::sigmoid::function_t   pFunc;      // Sigmoid function
                     float               fThreshold;         // Threshold
+                    float               fDCOffset;          // DC offset
                     float               fPumping;           // Pumping
                     float               fScaling;           // Sigmoid scaling
                     float               fKnee;              // Knee
@@ -94,6 +96,8 @@ namespace lsp
                     plug::IPort        *pOn;                // Enable sigmoid function
                     plug::IPort        *pFunction;          // Sigmoid function
                     plug::IPort        *pThreshold;         // Sigmoid threshold
+                    plug::IPort        *pDCOffset;          // DC offset
+                    plug::IPort        *pDCCompensate;      // DC compensate
                     plug::IPort        *pPumping;           // Sigmoid pumping
                     plug::IPort        *pCurveMesh;         // Curve chart mesh
                 } clip_params_t;
@@ -121,6 +125,8 @@ namespace lsp
                     dspu::Dither        sDither;            // Dither
                     dspu::MeterGraph    sInGraph;           // Input meter graph
                     dspu::MeterGraph    sOutGraph;          // Output meter graph
+                    dspu::MeterGraph    sWaveformGraph;     // Waveform meter graph
+                    dspu::MeterGraph    sRedGraph;          // Reduction meter graph
 
                     // Channel flags
                     uint32_t            nFlags;             // Channel flags
@@ -134,13 +140,14 @@ namespace lsp
                     float               fOdpOut;            // Overdrive protection out level
                     float               fOdpRed;            // Overdrive protection reduction level
 
-                    float               fClipIn;            // Clipping input level measured
-                    float               fClipOut;           // Clipping output level measured
+                    float               fClipIn[2];         // Clipping input level measured
+                    float               fClipOut[2];        // Clipping output level measured
                     float               fClipRed;           // Clipping reduction level measured
 
                     // Buffers
                     float              *vIn;                // Input buffer
                     float              *vOut;               // Output buffer
+                    float              *vInMeter;           // Input data metering
                     float              *vData;              // Data buffer
                     float              *vSc;                // Sidechain buffer
 
@@ -161,11 +168,9 @@ namespace lsp
                     plug::IPort        *pOdpOut;            // ODP output level meter
                     plug::IPort        *pOdpRed;            // ODP reduction level meter
 
-                    plug::IPort        *pClipIn;            // Clipping input level meter
-                    plug::IPort        *pClipOut;           // Clipping output level meter
+                    plug::IPort        *pClipIn[2];         // Clipping input level meter
+                    plug::IPort        *pClipOut[2];        // Clipping output level meter
                     plug::IPort        *pClipRed;           // Clipping reduction level meter
-
-                    plug::IPort        *pTimeMesh;          // Input, output and gain reduction graph mesh
                 } channel_t;
 
             protected:
@@ -195,6 +200,7 @@ namespace lsp
                 float              *vLinSigmoid;        // Linear scale for sigmoid
                 float              *vLogSigmoid;        // Logarithmic scale for sigmoid
                 float              *vTime;              // Time graph
+                float              *vWaveformTime;      // Waveform graph
                 core::IDBuffer     *pIDisplay;          // Inline display buffer
 
                 plug::IPort        *pBypass;            // Bypass
@@ -206,6 +212,8 @@ namespace lsp
                 plug::IPort        *pBoosting;          // Boosting mode
                 plug::IPort        *pStereoLink;        // Stereo linking for output clipper
                 plug::IPort        *pDithering;         // Dithering mode
+                plug::IPort        *pTimeMesh;          // Input, output, gain reduction graph mesh
+                plug::IPort        *pWaveformMesh;      // Waveform graph mesh
 
                 uint8_t            *pData;              // Allocated data
 
@@ -228,6 +236,9 @@ namespace lsp
             protected:
                 void                    do_destroy();
                 void                    bind_input_buffers();
+                void                    process_odp_channel(channel_t *c, size_t samples);
+                void                    process_clip_channel(channel_t *c, size_t samples);
+                void                    meter_channel(channel_t *c, size_t samples);
                 void                    process_clipper(size_t samples);
                 void                    output_signal(size_t samples);
                 void                    advance_buffers(size_t samples);

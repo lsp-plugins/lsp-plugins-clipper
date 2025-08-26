@@ -1,0 +1,9 @@
+{
+	"clipper": {
+		"view": {		
+			"combined": "Combined",
+			"dynamics": "Dynamics",
+			"waveform": "Waveform"
+		}
+	}
+}
