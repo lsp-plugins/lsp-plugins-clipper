@@ -132,6 +132,7 @@ namespace lsp
             vLinSigmoid             = NULL;
             vLogSigmoid             = NULL;
             vTime                   = NULL;
+            vIDisplay               = NULL;
             vWaveformTime           = NULL;
             pIDisplay               = NULL;
 
@@ -214,6 +215,7 @@ namespace lsp
                 szof_curve_buffer +     // vLinSigmoid
                 szof_curve_buffer +     // vLogSigmoid
                 szof_time_buffer +      // vTime
+                szof_time_buffer +      // vIDisplay
                 szof_time_buffer +      // vWaveformTime
                 nChannels * (
                     szof_buffer +       // vInMeter
@@ -275,6 +277,7 @@ namespace lsp
             vLinSigmoid             = advance_ptr_bytes<float>(ptr, szof_curve_buffer);
             vLogSigmoid             = advance_ptr_bytes<float>(ptr, szof_curve_buffer);
             vTime                   = advance_ptr_bytes<float>(ptr, szof_time_buffer);
+            vIDisplay               = advance_ptr_bytes<float>(ptr, szof_time_buffer);
             vWaveformTime           = advance_ptr_bytes<float>(ptr, szof_time_buffer);
 
             for (size_t i=0; i < nChannels; ++i)
@@ -469,10 +472,10 @@ namespace lsp
                 c->sScDelay.init(max_odp_delay);
                 c->sSc.init(1, meta::clipper::ODP_REACT_MAX);
                 c->sSc.set_sample_rate(sr);
-                c->sInGraph.init(meta::clipper::TIME_MESH_POINTS, samples_per_dot);
-                c->sOutGraph.init(meta::clipper::TIME_MESH_POINTS, samples_per_dot);
-                c->sWaveformGraph.init(meta::clipper::TIME_MESH_POINTS, wf_samples_per_dot);
-                c->sRedGraph.init(meta::clipper::TIME_MESH_POINTS, samples_per_dot);
+                c->sInGraph.init(meta::clipper::TIME_MESH_POINTS, samples_per_dot, GAIN_AMP_M_INF_DB);
+                c->sOutGraph.init(meta::clipper::TIME_MESH_POINTS, samples_per_dot, GAIN_AMP_M_INF_DB);
+                c->sWaveformGraph.init(meta::clipper::TIME_MESH_POINTS, wf_samples_per_dot, GAIN_AMP_M_INF_DB);
+                c->sRedGraph.init(meta::clipper::TIME_MESH_POINTS, samples_per_dot, GAIN_AMP_0_DB);
             }
         }
 
@@ -1082,9 +1085,9 @@ namespace lsp
                     float *out      = mesh->pvData[index++];
                     float *red      = mesh->pvData[index++];
 
-                    dsp::copy(&in[2], c->sInGraph.data(), meta::clipper::TIME_MESH_POINTS);
-                    dsp::copy(&out[2], c->sOutGraph.data(), meta::clipper::TIME_MESH_POINTS);
-                    dsp::copy(&red[2], c->sRedGraph.data(), meta::clipper::TIME_MESH_POINTS);
+                    c->sInGraph.read(&in[2], meta::clipper::TIME_MESH_POINTS);
+                    c->sOutGraph.read(&out[2], meta::clipper::TIME_MESH_POINTS);
+                    c->sRedGraph.read(&red[2], meta::clipper::TIME_MESH_POINTS);
 
                     // Generate extra points
                     in[0]           = 0.0f;
@@ -1132,7 +1135,7 @@ namespace lsp
                     // Fill time values
                     float *osc      = mesh->pvData[index++];
 
-                    dsp::copy(&osc[2], c->sWaveformGraph.data(), meta::clipper::TIME_MESH_POINTS);
+                    c->sWaveformGraph.read(&osc[2], meta::clipper::TIME_MESH_POINTS);
 
                     // Generate extra points
                     osc[0]          = 0.0f;
@@ -1250,20 +1253,21 @@ namespace lsp
                 channel_t *c    = &vChannels[i];
 
                 // Initialize values
-                const float *in_g   = c->sInGraph.data();
-                const float *out_g  = c->sOutGraph.data();
-                const float *red_g  = c->sRedGraph.data();
                 float *in           = &b->v[3 + i*3 + 0][2];
                 float *out          = &b->v[3 + i*3 + 1][2];
                 float *red          = &b->v[3 + i*3 + 2][2];
 
+                c->sInGraph.read(vIDisplay, meta::clipper::TIME_MESH_POINTS);
                 for (size_t k=0; k<width; ++k)
-                {
-                    size_t off      = size_t(r*k);
-                    in[k]           = in_g[off];
-                    out[k]          = out_g[off];
-                    red[k]          = red_g[off];
-                }
+                    in[k]               = vIDisplay[size_t(r*k)];
+
+                c->sOutGraph.read(vIDisplay, meta::clipper::TIME_MESH_POINTS);
+                for (size_t k=0; k<width; ++k)
+                    out[k]              = vIDisplay[size_t(r*k)];
+
+                c->sRedGraph.read(vIDisplay, meta::clipper::TIME_MESH_POINTS);
+                for (size_t k=0; k<width; ++k)
+                    red[k]              = vIDisplay[size_t(r*k)];
 
                 // Add terminating points
                 in[-2]          = 0.0f;
@@ -1496,6 +1500,7 @@ namespace lsp
             v->write("vLinSigmoid", vLinSigmoid);
             v->write("vLogSigmoid", vLogSigmoid);
             v->write("vTime", vTime);
+            v->write("vIDisplay", vIDisplay);
             v->write("vWaveformTime", vWaveformTime);
             v->write("pIDisplay", pIDisplay);
 
