@@ -198,7 +198,8 @@ namespace lsp
             "plugins/dynamics/clipper/mono.xml",
             NULL,
             mono_plugin_port_groups,
-            &clipper_bundle
+            &clipper_bundle,
+            2
         };
         LSP_REGISTER_METADATA(clipper_mono);
 
@@ -229,12 +230,10 @@ namespace lsp
             "plugins/dynamics/clipper/stereo.xml",
             NULL,
             stereo_plugin_port_groups,
-            &clipper_bundle
+            &clipper_bundle,
+            1
         };
         LSP_REGISTER_METADATA(clipper_stereo);
 
     } /* namespace meta */
 } /* namespace lsp */
-
-
-
