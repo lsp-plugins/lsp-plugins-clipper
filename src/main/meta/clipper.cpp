@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2026 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2026 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-plugins-clipper
  * Created on: 01 дек 2023 г.
@@ -20,12 +20,13 @@
  */
 
 #include <lsp-plug.in/plug-fw/meta/ports.h>
+#include <lsp-plug.in/plug-fw/meta/registry.h>
 #include <lsp-plug.in/shared/meta/developers.h>
 #include <private/meta/clipper.h>
 
 #define LSP_PLUGINS_CLIPPER_VERSION_MAJOR       1
 #define LSP_PLUGINS_CLIPPER_VERSION_MINOR       0
-#define LSP_PLUGINS_CLIPPER_VERSION_MICRO       13
+#define LSP_PLUGINS_CLIPPER_VERSION_MICRO       14
 
 #define LSP_PLUGINS_CLIPPER_VERSION  \
     LSP_MODULE_VERSION( \
@@ -194,11 +195,13 @@ namespace lsp
             clap_features_mono,
             E_DUMP_STATE | E_INLINE_DISPLAY,
             clipper_mono_ports,
-            "dynamics/clipper/mono.xml",
+            "plugins/dynamics/clipper/mono.xml",
             NULL,
             mono_plugin_port_groups,
-            &clipper_bundle
+            &clipper_bundle,
+            2
         };
+        LSP_REGISTER_METADATA(clipper_mono);
 
         const plugin_t clipper_stereo =
         {
@@ -224,13 +227,13 @@ namespace lsp
             clap_features_stereo,
             E_DUMP_STATE | E_INLINE_DISPLAY,
             clipper_stereo_ports,
-            "dynamics/clipper/stereo.xml",
+            "plugins/dynamics/clipper/stereo.xml",
             NULL,
             stereo_plugin_port_groups,
-            &clipper_bundle
+            &clipper_bundle,
+            1
         };
+        LSP_REGISTER_METADATA(clipper_stereo);
+
     } /* namespace meta */
 } /* namespace lsp */
-
-
-

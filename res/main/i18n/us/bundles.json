@@ -1,7 +1,11 @@
 {
 	"clipper": {
-		"name": "Plugin Template",
-		"description": "Peak clipping tool for maximization of output loudness"
+		"description": "Peak clipping tool for maximization of output loudness.",
+		"name": "Clipper"
+	},
+	"launcher": {
+		"clipper_mono": "Mono",
+		"clipper_stereo": "Stereo"
 	}
 }
 
