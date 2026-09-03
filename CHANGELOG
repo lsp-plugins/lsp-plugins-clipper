@@ -3,7 +3,9 @@
 *******************************************************************************
 
 === 1.0.20 ===
-
+* Fixed bug in DSP code that could cause a crash of the plugin on processors
+  with AVX-512 instruction set support when setting any of DC Offset parameters
+  to the non-default value.
 
 === 1.0.19 ===
 * Updated build scripts and dependencies.
