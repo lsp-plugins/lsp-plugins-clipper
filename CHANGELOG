@@ -3,7 +3,7 @@
 *******************************************************************************
 
 === 1.0.21 ===
-
+* Updated build scripts and dependencies.
 
 === 1.0.20 ===
 * Fixed bug in DSP code that could cause a crash of the plugin on processors
