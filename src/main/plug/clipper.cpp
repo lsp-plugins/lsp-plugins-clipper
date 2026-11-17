@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2026 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2026 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-plugins-clipper
  * Created on: 01 дек 2023 г.
@@ -621,8 +621,28 @@ namespace lsp
 
         void clipper::clip_curve(float *dst, const float *x, const clip_params_t *p, size_t count)
         {
+            const float pumping     = p->fPumping;
+            const float threshold   = p->fThreshold;
+            const float scaling     = p->fScaling;
+            const float knee        = p->fKnee;
+            const dspu::sigmoid::function_t func = p->pFunc;
+
             for (size_t i=0; i<count; ++i)
-                dst[i]          = clip_curve(p, x[i]);
+            {
+                float s             = x[i] * pumping;
+                if (s > threshold)
+                {
+                    s               = (s - threshold) * scaling;
+                    dst[i]          = func(s) * knee + threshold;
+                }
+                else if (s < -threshold)
+                {
+                    s               = (s + threshold) * scaling;
+                    dst[i]          = func(s) * knee - threshold;
+                }
+                else
+                    dst[i]          = s;
+            }
         }
 
         void clipper::update_settings()
